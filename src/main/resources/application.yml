@@ -1,0 +1,45 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/campus_trade?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: hy2869956376
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
+  # Redis 缓存配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 3000ms
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000   # 缓存10分钟
+      cache-null-values: false
+
+# 管理员账号：admin / Admin@123456（仅用于后台管理，不参与前台交易）
+admin:
+  phone: admin
+  password: Admin@123456
+
+jwt:
+  secret: campus-trade-jwt-secret-key-2026-very-long-string!!
+  expire-days: 7
+
+file:
+  # 使用绝对路径，防止 IntelliJ 运行时的临时目录导致的路径偏差
+  upload-dir: C:/Users/29153/Desktop/UniTrade/Uni-trade/uploads
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
