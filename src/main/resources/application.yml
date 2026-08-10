@@ -1,5 +1,10 @@
 server:
   port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
 
 spring:
   datasource:
@@ -11,7 +16,6 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 50MB
-  # Redis 缓存配置
   data:
     redis:
       host: localhost
@@ -20,10 +24,9 @@ spring:
   cache:
     type: redis
     redis:
-      time-to-live: 600000   # 缓存10分钟
+      time-to-live: 600000
       cache-null-values: false
 
-# 管理员账号：admin / Admin@123456（仅用于后台管理，不参与前台交易）
 admin:
   phone: admin
   password: Admin@123456
@@ -33,7 +36,6 @@ jwt:
   expire-days: 7
 
 file:
-  # 使用绝对路径，防止 IntelliJ 运行时的临时目录导致的路径偏差
   upload-dir: C:/Users/29153/Desktop/UniTrade/Uni-trade/uploads
 
 mybatis-plus:

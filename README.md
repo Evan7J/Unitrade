@@ -1,53 +1,61 @@
-# UniTrade — 校园闲置交易平台
+# UniTrade - 校园二手交易平台
 
-一个面向校园场景的二手交易平台，Spring Boot + MyBatis-Plus + Redis + WebSocket。
+一个校园二手闲置交易平台，支持发布商品、搜索、买卖家实时聊天、订单管理。
 
 ## 技术栈
 
-| 层级 | 技术 |
-|------|------|
-| 后端 | Spring Boot 3.4 + MyBatis-Plus 3.5 |
-| 数据库 | MySQL 8.0 |
-| 缓存 | Redis |
-| 认证 | JWT + BCrypt |
-| 实时通信 | WebSocket |
-| 接口限流 | Guava RateLimiter |
-| Java | 21 |
+- 后端：SpringBoot 3.4 + MyBatis-Plus + JWT + WebSocket + Redis
+- 前端：Vue3 + Element Plus + TailwindCSS
+- 数据库：MySQL 8 + Redis
 
-## 功能
+## 做了啥
 
-- 用户注册登录（BCrypt 加密）
-- 商品发布、浏览、搜索、分类筛选
-- 商品收藏、在线聊天（WebSocket）
-- 下单购买、订单管理
-- 收货地址管理、评价
-- 管理后台：商品审核、订单管理、用户管理、数据概览
+商品功能比较常规，发布、搜索、分类筛选、收藏。搜索支持标题和卖家昵称模糊匹配，商品详情加了 Spring Cache + Redis 缓存，编辑或者下架的时候自动清缓存。
 
-## 快速启动
+聊天这块用 WebSocket 做的，前端连上长连接，消息直接推，不用一直轮询。在线用户用 ConcurrentHashMap 存着，消息先写到数据库再推送，这样就算人不在线，下次登录也能看到聊天记录。
 
-需要 JDK 21、MySQL 8.0、Redis、Maven。
+订单流程参考了闲鱼的：待付款 -> 已付款 -> 已发货 -> 已完成，支持取消和退款。下单的时候会检查这个商品有没有正在进行的订单，防止同个商品被多个人同时买走。
+
+接口限流用了 Guava 的 RateLimiter，读接口 20 次/秒、写接口 3 次/秒，按 IP 区分。认证用的 JWT，前端请求头带 token，后端拦截器校验，用户 ID 通过 ThreadLocal 传递，不用每次都从 token 解析。
+
+后台管理分了 7 个模块：数据概览、公告、轮播图、商品分类、商品管理、订单管理、角色管理。
+
+## 怎么跑
+
+确保 MySQL 和 Redis 先跑起来，然后导入项目根目录下的 `init.sql` 建库建表。
 
 ```bash
-git clone https://github.com/Evan7J/unitrade.git
-cd unitrade/Uni-trade
-# 在 MySQL 中创建数据库: CREATE DATABASE campus_trade DEFAULT CHARACTER SET utf8mb4;
-# 修改 application.yml 中的数据库密码和 Redis 连接信息
+git clone https://github.com/Evan7J/UniTrade.git
+cd UniTrade/Uni-trade
+# application.yml 里改一下数据库密码
 mvn spring-boot:run
-# 访问 http://localhost:8080
 ```
 
-## 项目结构
+前端：
 
+```bash
+cd UniTrade/frontend
+npm install
+npm run dev
 ```
-src/main/java/com/example/unitrade/
-├── common/        # 统一返回、异常处理
-├── config/        # JWT 拦截器、限流拦截器、WebSocket 配置
-├── controller/    # 接口层（用户端 + 管理后台）
-├── dto/           # 数据传输对象
-├── entity/        # 数据库实体
-├── mapper/        # MyBatis-Plus Mapper
-├── service/       # 业务逻辑
-├── util/          # JWT 工具类
-├── vo/            # 视图对象
-└── websocket/     # WebSocket 聊天
-```
+
+管理员账号：`admin` / `Admin@123456`
+测试用户：`13800138000` / `123456`
+
+## 页面截图
+
+发布商品：
+
+![发布商品](screenshots/publish.png)
+
+个人主页：
+
+![个人主页](screenshots/profile.png)
+
+后台 Dashboard：
+
+![后台Dashboard](screenshots/admin-dashboard.png)
+
+分类管理：
+
+![分类管理](screenshots/category-manage.png)
