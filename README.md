@@ -59,3 +59,17 @@ npm run dev
 分类管理：
 
 ![分类管理](screenshots/category-manage.png)
+
+## AI智能问答模块
+
+集成LangChain + FastAPI的RAG文档问答Agent，支持基于PDF文档的智能检索与问答。
+
+- 后端：Java SpringBoot通过HTTP调用Python AI服务
+- AI服务：Python FastAPI + LangChain Agent + FAISS向量检索
+- 大模型：DeepSeek API
+
+### 启动方式
+
+1. 启动Python AI服务（见 [rag-agent](https://github.com/ 你的用户名/rag-agent)）
+2. 启动SpringBoot项目
+3. 访问 `POST /ai/ask` 接口
