@@ -25,16 +25,16 @@
 确保 MySQL 和 Redis 先跑起来，然后导入项目根目录下的 `init.sql` 建库建表。
 
 ```bash
-git clone https://github.com/Evan7J/UniTrade.git
-cd UniTrade/Uni-trade
-# application.yml 里改一下数据库密码
+git clone https://github.com/Evan7J/unitrade.git
+cd unitrade
+# 设置环境变量 DEEPSEEK_API_KEY（DeepSeek 密钥）和 DB_PASSWORD（数据库密码），然后启动
 mvn spring-boot:run
 ```
 
 前端：
 
 ```bash
-cd UniTrade/frontend
+cd frontend
 npm install
 npm run dev
 ```
@@ -60,16 +60,20 @@ npm run dev
 
 ![分类管理](screenshots/category-manage.png)
 
-## AI智能问答模块
+## AI 闲置助手
 
-集成LangChain + FastAPI的RAG文档问答Agent，支持基于PDF文档的智能检索与问答。
+基于 DeepSeek 大模型实现的自研 Agent，不依赖 Spring AI 框架，直接通过 HTTP 调用 DeepSeek API 并实现工具调用循环（ReAct 模式）。
 
-- 后端：Java SpringBoot通过HTTP调用Python AI服务
-- AI服务：Python FastAPI + LangChain Agent + FAISS向量检索
-- 大模型：DeepSeek API
+- 模型：DeepSeek V4 Flash（关闭思考模式，保证工具调用稳定）
+- 工具：`searchProducts`（商品搜索，含同义词扩展）、`listCategories`（分类查询）、`draftProduct`（一键生成发布草稿）
+
+### 能力
+
+1. **智能导购**：用户用自然语言描述需求，模型自动调用搜索工具查库，返回可点击的商品卡片（跳转商品详情）。
+2. **一键发布**：用户描述商品，模型抽取标题、价格、成色、分类并生成发布草稿，前端回填表单，用户确认后发布。
 
 ### 启动方式
 
-1. 启动Python AI服务（见 [rag-agent](https://github.com/ 你的用户名/rag-agent)）
-2. 启动SpringBoot项目
-3. 访问 `POST /ai/ask` 接口
+1. 配置环境变量 `DEEPSEEK_API_KEY`
+2. 启动 SpringBoot 项目
+3. 前端 AI 助手页面调用 `POST /api/agent/chat` 接口

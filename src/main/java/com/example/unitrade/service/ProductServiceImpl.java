@@ -23,9 +23,11 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -46,6 +48,26 @@ public class ProductServiceImpl implements ProductService {
     private final FavoriteMapper favoriteMapper;
 
     /**
+     * 同义词表：用户常用的中文词 → 可能以其他写法出现的关键词
+     *
+     * 用于解决中文搜索匹配不到英文/别名标题的问题，
+     * 比如搜「手机」时也能匹配到标题里的 iPhone、华为、小米等。
+     * 匹配时对标题做模糊查询，key 本身也在扩展词里（避免只搜别名漏掉原名）。
+     */
+    private static final Map<String, List<String>> SYNONYMS = Map.of(
+            "手机", List.of("手机", "iphone", "华为", "小米", "oppo", "vivo", "三星", "苹果", "apple"),
+            "电脑", List.of("电脑", "笔记本", "macbook", "联想", "thinkpad", "华硕", "戴尔"),
+            "平板", List.of("平板", "ipad", "平板电脑"),
+            "耳机", List.of("耳机", "airpods", "耳麦", "蓝牙耳机"),
+            "相机", List.of("相机", "单反", "微单", "索尼", "佳能", "尼康"),
+            "手机壳", List.of("手机壳", "保护壳"),
+            "键盘", List.of("键盘", "机械键盘", "keyboard"),
+            "鼠标", List.of("鼠标", "mouse"),
+            "显示器", List.of("显示器", "显示屏", "屏幕"),
+            "洗衣机", List.of("洗衣机", "洗衣")
+    );
+
+    /**
      * 发布商品
      *
      * 流程：
@@ -55,6 +77,16 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     public void publish(ProductPublishDTO dto) {
+        if (!StringUtils.hasText(dto.getTitle())) {
+            throw new BusinessException("商品标题不能为空");
+        }
+        if (dto.getPrice() == null || dto.getPrice().compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessException("售价不能为空且不能小于0");
+        }
+        if (dto.getCategoryId() == null) {
+            throw new BusinessException("请选择商品分类");
+        }
+
         Long userId = JwtInterceptor.getCurrentUserId();
 
         Product product = new Product();
@@ -94,15 +126,25 @@ public class ProductServiceImpl implements ProductService {
         // 关键词搜索：匹配商品标题 或 卖家昵称
         if (StringUtils.hasText(dto.getKeyword())) {
             String keyword = dto.getKeyword();
-            // 先查匹配昵称的用户ID列表
+            // 同义词扩展：如果用户输入的词在同义词表里，用扩展词一起匹配标题
+            List<String> matchKeys = expandKeyword(keyword);
+
+            // 先查匹配昵称的用户ID列表（用原始关键词）
             List<Long> userIds = userMapper.selectList(
                 new LambdaQueryWrapper<User>().like(User::getNickname, keyword)
             ).stream().map(User::getId).collect(Collectors.toList());
-            // 标题模糊匹配 或 卖家ID在匹配列表中
-            wrapper.and(w -> w
-                .like(Product::getTitle, keyword)
-                .or().in(!userIds.isEmpty(), Product::getUserId, userIds)
-            );
+
+            // 标题按扩展词模糊匹配（任意一个命中即可） 或 卖家ID在匹配列表中
+            wrapper.and(w -> {
+                for (int i = 0; i < matchKeys.size(); i++) {
+                    if (i == 0) {
+                        w.like(Product::getTitle, matchKeys.get(i));
+                    } else {
+                        w.or().like(Product::getTitle, matchKeys.get(i));
+                    }
+                }
+                w.or().in(!userIds.isEmpty(), Product::getUserId, userIds);
+            });
         }
 
         // 分类筛选
@@ -169,6 +211,27 @@ public class ProductServiceImpl implements ProductService {
 
         voPage.setRecords(voList);
         return voPage;
+    }
+
+    /**
+     * 关键词同义词扩展
+     *
+     * 如果用户输入的关键词命中同义词表，就返回扩展后的词列表（含原词），
+     * 否则返回只含原词的列表。
+     * 匹配不分大小写，所以「iPhone」和「iphone」视为同一个词。
+     */
+    private List<String> expandKeyword(String keyword) {
+        String key = keyword.trim().toLowerCase();
+        List<String> expanded = SYNONYMS.get(key);
+        if (expanded == null) {
+            return List.of(keyword);
+        }
+        // 原词也放进列表（可能大小写不同），保证原文也能被匹配
+        List<String> result = new java.util.ArrayList<>(expanded);
+        if (!result.contains(keyword)) {
+            result.add(keyword);
+        }
+        return result;
     }
 
     /**

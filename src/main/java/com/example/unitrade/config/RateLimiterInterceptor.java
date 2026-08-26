@@ -32,8 +32,15 @@ public class RateLimiterInterceptor implements HandlerInterceptor {
         String uri = request.getRequestURI();
 
         String method = request.getMethod();
-        double rate = ("POST".equals(method) || "PUT".equals(method) || "DELETE".equals(method))
-                ? WRITE_RATE : DEFAULT_RATE;
+
+        // AI 助手对话只做查询和生成草稿，不写数据库，按读限流处理，避免误伤
+        double rate;
+        if (uri.startsWith("/api/agent/")) {
+            rate = DEFAULT_RATE;
+        } else {
+            rate = ("POST".equals(method) || "PUT".equals(method) || "DELETE".equals(method))
+                    ? WRITE_RATE : DEFAULT_RATE;
+        }
 
         String key = ip + ":" + (rate == WRITE_RATE ? "write" : "read");
         RateLimiter limiter = limiterMap.computeIfAbsent(key, k -> RateLimiter.create(rate));

@@ -1,0 +1,101 @@
+/* ===== Tailwind CSS 指令 ===== */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== 全局 CSS 变量（与 Tailwind 配置保持同步，便于全局修改） ===== */
+:root {
+  /* 主色 - 暖橙 */
+  --color-primary: #FF7D00;
+  --color-primary-light: #FF9A3C;
+  --color-primary-dark: #E56E00;
+
+  /* 中性色 */
+  --color-bg-light: #F5F7FA;
+  --color-text-main: #333;
+  --color-text-secondary: #666;
+  --color-text-muted: #999;
+
+  /* 圆角 */
+  --radius-card: 8px;
+
+  /* 阴影 */
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-navbar: 0 1px 4px rgba(0, 0, 0, 0.08);
+
+  /* 间距 */
+  --max-width-page: 1200px;
+}
+
+/* ===== 全局重置 ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  background: #F5F7FA;
+  color: var(--color-text-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* ===== 全局滚动条美化 ===== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+/* ===== 通用工具类 ===== */
+@layer components {
+  /* 页面内容容器 */
+  .page-container {
+    max-width: var(--max-width-page);
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  /* 统一卡片样式 */
+  .card-base {
+    background: #fff;
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .card-base:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card-hover);
+  }
+
+  /* 标题文字层级 */
+  .text-title {
+    font-weight: 700;
+    color: var(--color-text-main);
+  }
+  .text-body {
+    font-weight: 400;
+    color: var(--color-text-main);
+  }
+  .text-caption {
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+}

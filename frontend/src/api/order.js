@@ -1,0 +1,11 @@
+import request from '../utils/request'
+export const create = (d) => request.post('/order/create', d)
+export const pay = (id) => request.put('/order/pay/' + id)
+export const ship = (id) => request.put('/order/ship/' + id)
+export const confirm = (id) => request.put('/order/confirm/' + id)
+export const cancel = (id, reason) => request.put('/order/cancel/' + id, { reason })
+export const refund = (id, reason) => request.put('/order/refund/' + id, { reason })
+export const agreeRefund = (id) => request.put('/order/agree-refund/' + id)
+export const rejectRefund = (id) => request.put('/order/reject-refund/' + id)
+export const myBuy = () => request.get('/order/buy')
+export const mySell = () => request.get('/order/sell')
