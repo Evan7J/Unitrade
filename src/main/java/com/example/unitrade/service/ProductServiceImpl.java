@@ -8,6 +8,7 @@ import com.example.unitrade.dto.ProductPublishDTO;
 import com.example.unitrade.dto.ProductQueryDTO;
 import com.example.unitrade.dto.ProductUpdateDTO;
 import com.example.unitrade.entity.Category;
+import com.example.unitrade.entity.Favorite;
 import com.example.unitrade.entity.Product;
 import com.example.unitrade.entity.User;
 import com.example.unitrade.mapper.CategoryMapper;
@@ -17,9 +18,9 @@ import com.example.unitrade.mapper.UserMapper;
 import com.example.unitrade.service.ProductService;
 import com.example.unitrade.vo.ProductListVO;
 import com.example.unitrade.vo.ProductVO;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -28,6 +29,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -46,6 +48,15 @@ public class ProductServiceImpl implements ProductService {
     private final UserMapper userMapper;
     private final CategoryMapper categoryMapper;
     private final FavoriteMapper favoriteMapper;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final ObjectMapper objectMapper;
+
+    /** 商品详情静态缓存 key 前缀 */
+    private static final String PRODUCT_CACHE_KEY = "product:detail:";
+    /** 浏览量 Redis 计数器 key 前缀 */
+    private static final String VIEW_COUNT_KEY = "product:view:";
+    /** 详情缓存过期时间（分钟） */
+    private static final long PRODUCT_CACHE_TTL_MINUTES = 60;
 
     /**
      * 同义词表：用户常用的中文词 → 可能以其他写法出现的关键词
@@ -191,7 +202,7 @@ public class ProductServiceImpl implements ProductService {
             vo.setPrice(product.getPrice());
             vo.setOriginalPrice(product.getOriginalPrice());
             vo.setProductCondition(product.getProductCondition());
-            vo.setViewCount(product.getViewCount());
+            vo.setViewCount(getViewCount(product.getId(), product.getViewCount()));
             vo.setShippingType(product.getShippingType());
             vo.setShippingFee(product.getShippingFee());
             vo.setCreateTime(product.getCreateTime());
@@ -235,37 +246,72 @@ public class ProductServiceImpl implements ProductService {
     }
 
     /**
-     * 查看商品详情（带 Redis 缓存）
+     * 查看商品详情
      *
-     * @Cacheable 说明：
-     *   - cacheNames="product" → Redis 中 key 前缀为 "product::"
-     *   - key="#productId" → 按商品ID区分缓存，如 "product::123"
-     *   - 首次查询走数据库并写入 Redis，后续查询直接走 Redis 缓存
-     *   - 当商品信息更新（编辑/下架）时需手动清除缓存
+     * 静态部分（标题、价格、图片、发布时间等）走 Redis 缓存，
+     * 动态部分（是否已收藏、浏览量）每次实时计算，避免把某个用户
+     * 的收藏状态和不断变化的浏览量一起缓存进 Redis 造成脏数据。
      *
-     * 流程：
-     * 1. 查商品基本信息
-     * 2. 查发布者信息（昵称、头像）
-     * 3. 查分类名称
-     * 4. 查当前用户是否已收藏
-     * 5. 浏览量 +1
+     * 浏览量用 Redis 自增计数，天然原子，高并发下不会丢 +1。
      */
     @Override
-    @Cacheable(value = "product", key = "#productId")
     public ProductVO getDetail(Long productId) {
-        // 1. 查商品
+        String cacheKey = PRODUCT_CACHE_KEY + productId;
+        String cached = stringRedisTemplate.opsForValue().get(cacheKey);
+
+        ProductVO vo;
+        if (cached != null) {
+            try {
+                vo = objectMapper.readValue(cached, ProductVO.class);
+            } catch (Exception e) {
+                vo = loadDetail(productId);
+            }
+        } else {
+            vo = loadDetail(productId);
+            try {
+                stringRedisTemplate.opsForValue().set(cacheKey,
+                        objectMapper.writeValueAsString(vo),
+                        PRODUCT_CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+            } catch (Exception ignored) {
+                // 序列化失败不影响主流程，下次查询会重新加载
+            }
+        }
+
+        // 是否已收藏：实时查
+        Long userId = JwtInterceptor.getCurrentUserId();
+        if (userId != null) {
+            Long count = favoriteMapper.selectCount(
+                    new LambdaQueryWrapper<Favorite>()
+                            .eq(Favorite::getUserId, userId)
+                            .eq(Favorite::getProductId, productId)
+            );
+            vo.setIsFavorite(count > 0);
+        } else {
+            vo.setIsFavorite(false);
+        }
+
+        // 浏览量：Redis 自增，首次用数据库里的历史值做起始基数
+        String viewKey = VIEW_COUNT_KEY + productId;
+        stringRedisTemplate.opsForValue().setIfAbsent(viewKey,
+                String.valueOf(vo.getViewCount() == null ? 0 : vo.getViewCount()));
+        vo.setViewCount(stringRedisTemplate.opsForValue()
+                .increment(viewKey).intValue());
+
+        return vo;
+    }
+
+    /**
+     * 从数据库加载商品详情静态部分（不含收藏状态和浏览量）
+     */
+    private ProductVO loadDetail(Long productId) {
         Product product = productMapper.selectById(productId);
         if (product == null) {
             throw new BusinessException("商品不存在");
         }
 
-        // 2. 查发布者
         User seller = userMapper.selectById(product.getUserId());
-
-        // 3. 查分类名称
         Category category = categoryMapper.selectById(product.getCategoryId());
 
-        // 4. 组装返回对象
         ProductVO vo = new ProductVO();
         vo.setId(product.getId());
         vo.setUserId(product.getUserId());
@@ -283,27 +329,27 @@ public class ProductServiceImpl implements ProductService {
         vo.setViewCount(product.getViewCount());
         vo.setCreateTime(product.getCreateTime());
 
-        // 图片路径逗号分隔 → 转数组
         if (StringUtils.hasText(product.getImages())) {
             vo.setImages(Arrays.asList(product.getImages().split(",")));
         } else {
             vo.setImages(Collections.emptyList());
         }
 
-        // 5. 判断当前用户是否已收藏
-        Long userId = JwtInterceptor.getCurrentUserId();
-        Long count = favoriteMapper.selectCount(
-                new LambdaQueryWrapper<com.example.unitrade.entity.Favorite>()
-                        .eq(com.example.unitrade.entity.Favorite::getUserId, userId)
-                        .eq(com.example.unitrade.entity.Favorite::getProductId, productId)
-        );
-        vo.setIsFavorite(count > 0);
-
-        // 6. 浏览量 +1
-        product.setViewCount(product.getViewCount() + 1);
-        productMapper.updateById(product);
-
         return vo;
+    }
+
+    /**
+     * 读浏览量：优先 Redis 计数，没有则回退数据库字段
+     */
+    private Integer getViewCount(Long productId, Integer fallback) {
+        String cached = stringRedisTemplate.opsForValue().get(VIEW_COUNT_KEY + productId);
+        if (cached != null) {
+            try {
+                return Integer.parseInt(cached);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return fallback;
     }
 
     /**
@@ -312,7 +358,6 @@ public class ProductServiceImpl implements ProductService {
      * 编辑后清除该商品的 Redis 缓存，下次查询会重新加载最新数据
      */
     @Override
-    @CacheEvict(value = "product", key = "#dto.id")
     public void update(ProductUpdateDTO dto) {
         Long userId = JwtInterceptor.getCurrentUserId();
 
@@ -336,6 +381,7 @@ public class ProductServiceImpl implements ProductService {
         product.setImages(dto.getImages());
 
         productMapper.updateById(product);
+        stringRedisTemplate.delete(PRODUCT_CACHE_KEY + dto.getId());
     }
 
     /**
@@ -344,7 +390,6 @@ public class ProductServiceImpl implements ProductService {
      * 下架后清除该商品的 Redis 缓存
      */
     @Override
-    @CacheEvict(value = "product", key = "#productId")
     public void offline(Long productId) {
         Long userId = JwtInterceptor.getCurrentUserId();
 
@@ -358,5 +403,6 @@ public class ProductServiceImpl implements ProductService {
 
         product.setStatus(3); // 已下架
         productMapper.updateById(product);
+        stringRedisTemplate.delete(PRODUCT_CACHE_KEY + productId);
     }
 }

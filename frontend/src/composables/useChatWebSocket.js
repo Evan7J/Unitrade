@@ -126,31 +126,15 @@ export function useChatWebSocket() {
     }
   }
 
-  // ============================================================
-  // send：发送消息
-  // ============================================================
-  // @param {string} receiverId - 接收方用户ID（发给谁）
-  // @param {string} content - 消息内容
-  // @param {string} productId - 关联商品ID（可选）
-  // @returns {boolean} 是否发送成功
-  //
-  // 【消息格式】
-  //   前端发送的字符串格式：receiverId:content:productId:messageType
-  //   后端 ChatEndpoint.onMessage() 用 split(":") 解析
-  //
-  //   示例：send("2", "你好", "5")
-  //   → 发送字符串："2:你好:5:text"
-  //   → 后端解析：
-  //       parts[0] = "2"      → receiverId = 2
-  //       parts[1] = "你好"    → content = "你好"
-  //       parts[2] = "5"      → productId = 5
-  //       parts[3] = "text"   → messageType = "text"
   const send = (receiverId, content, productId = '') => {
-    // 检查连接状态：必须是 OPEN 状态才能发送
     if (!ws.value || ws.value.readyState !== WebSocket.OPEN) return false
 
-    // 拼装消息字符串
-    const msg = `${receiverId}:${content}:${productId}:text`
+    const msg = JSON.stringify({
+      receiverId: Number(receiverId),
+      content,
+      productId: productId ? Number(productId) : null,
+      messageType: 'text'
+    })
     ws.value.send(msg)
     return true
   }

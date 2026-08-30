@@ -1,6 +1,7 @@
 package com.example.unitrade.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.unitrade.common.BusinessException;
 import com.example.unitrade.config.JwtInterceptor;
@@ -14,6 +15,7 @@ import com.example.unitrade.mapper.UserMapper;
 import com.example.unitrade.service.OrderService;
 import com.example.unitrade.vo.OrderVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -50,14 +52,16 @@ public class OrderServiceImpl implements OrderService {
     private final ProductMapper productMapper;
     private final UserMapper userMapper;
 
+    private static final int ORDER_TIMEOUT_MINUTES = 30;
+
     /**
      * 买家下单
      *
      * 流程：
      * 1. 校验商品存在且在售
      * 2. 校验不能买自己的商品
-     * 3. 校验无人正在下单该商品
-     * 4. 事务中：插入订单 + 锁定商品
+     * 3. 原子锁定商品状态，防止并发抢单
+     * 4. 事务中：插入订单
      */
     @Override
     @Transactional
@@ -75,27 +79,21 @@ public class OrderServiceImpl implements OrderService {
             throw new BusinessException("不能购买自己的商品");
         }
 
-        // 检查该商品是否已有进行中的订单（防止一物多卖）
-        Long count = orderMapper.selectCount(
-                new LambdaQueryWrapper<Order>()
-                        .eq(Order::getProductId, dto.getProductId())
-                        .in(Order::getStatus, 1, 2, 3, 6) // 待付款、已付款、已发货、退款中
-        );
-        if (count > 0) {
+        // 把商品从在售改成锁定，谁能改成功谁下单，并发下只有一个能成功
+        int locked = productMapper.update(null, new LambdaUpdateWrapper<Product>()
+                .eq(Product::getId, dto.getProductId())
+                .eq(Product::getStatus, 1)
+                .set(Product::getStatus, 2));
+        if (locked == 0) {
             throw new BusinessException("该商品已被其他人下单");
         }
 
-        // 插入订单（待付款）
         Order order = new Order();
         order.setBuyerId(buyerId);
         order.setSellerId(product.getUserId());
         order.setProductId(dto.getProductId());
         order.setStatus(1); // 待付款
         orderMapper.insert(order);
-
-        // 锁定商品（不让别人再下单）
-        product.setStatus(2); // 已锁定
-        productMapper.updateById(product);
 
         return buildOrderVO(order);
     }
@@ -314,15 +312,30 @@ public class OrderServiceImpl implements OrderService {
         return buildOrderVOPage(orderPage);
     }
 
-    /**
-     * 恢复商品为在售状态
-     */
-    private void restoreProduct(Long productId) {
-        Product product = productMapper.selectById(productId);
-        if (product != null && product.getStatus() != 1) {
-            product.setStatus(1);
-            productMapper.updateById(product);
+    @Scheduled(fixedDelay = 60000)
+    @Transactional
+    public void cancelTimeoutOrders() {
+        LocalDateTime deadline = LocalDateTime.now().minusMinutes(ORDER_TIMEOUT_MINUTES);
+        List<Order> orders = orderMapper.selectList(new LambdaQueryWrapper<Order>()
+                .eq(Order::getStatus, 1)
+                .lt(Order::getCreateTime, deadline));
+        for (Order order : orders) {
+            int rows = orderMapper.update(null, new LambdaUpdateWrapper<Order>()
+                    .eq(Order::getId, order.getId())
+                    .eq(Order::getStatus, 1)
+                    .set(Order::getStatus, 5)
+                    .set(Order::getCancelReason, "超时未支付，自动取消"));
+            if (rows > 0) {
+                restoreProduct(order.getProductId());
+            }
         }
+    }
+
+    private void restoreProduct(Long productId) {
+        productMapper.update(null, new LambdaUpdateWrapper<Product>()
+                .eq(Product::getId, productId)
+                .ne(Product::getStatus, 1)
+                .set(Product::getStatus, 1));
     }
 
     /**

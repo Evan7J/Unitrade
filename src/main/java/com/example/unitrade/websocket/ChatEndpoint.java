@@ -60,24 +60,15 @@ public class ChatEndpoint {
     public void onMessage(String message, Session session, @PathParam("token") String token) {
         try {
             Long userId = jwtUtil.getUserIdFromToken(token);
-            // message format: "receiverId:content:productId:messageType"
-            String[] parts = message.split(":", 4);
-            Long receiverId = Long.valueOf(parts[0]);
-            String content = parts[1];
-            Long productId = parts.length > 2 && !parts[2].isEmpty() ? Long.valueOf(parts[2]) : null;
-            String messageType = parts.length > 3 ? parts[3] : "text";
-
-            ChatMessage msg = new ChatMessage();
+            ChatMessage msg = objectMapper.readValue(message, ChatMessage.class);
             msg.setSenderId(userId);
-            msg.setReceiverId(receiverId);
-            msg.setProductId(productId);
-            msg.setContent(content);
-            msg.setMessageType(messageType);
+            if (msg.getMessageType() == null || msg.getMessageType().isBlank()) {
+                msg.setMessageType("text");
+            }
             chatMessageService.send(msg);
 
-            Session receiverSession = ONLINE_USERS.get(receiverId);
+            Session receiverSession = ONLINE_USERS.get(msg.getReceiverId());
             if (receiverSession != null && receiverSession.isOpen()) {
-                // 用 Jackson 序列化消息为 JSON，自动处理转义和时间格式
                 String json = objectMapper.writeValueAsString(msg);
                 receiverSession.getBasicRemote().sendText(json);
             }
