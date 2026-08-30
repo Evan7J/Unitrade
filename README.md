@@ -43,6 +43,11 @@ npm run dev
 测试用户：`13800138000` / `123456`
 
 ## 页面截图
+agent智能问答：
+<img width="2880" height="1492" alt="fa66318c8a19b03a2201f10643c94f7d" src="https://github.com/user-attachments/assets/9c0602b2-19a6-4464-9468-d618ef1469eb" />
+<img width="2880" height="1494" alt="fde17e34a43b8e174904658ae3a14a40" src="https://github.com/user-attachments/assets/c9a397f9-0c24-4a38-80ed-2db272c5671b" />
+<img width="2880" height="1498" alt="3047517b3f50ef8280e2cf6fe77f93a0" src="https://github.com/user-attachments/assets/7df75780-288d-4007-8cb4-d348864b6c9d" />
+
 
 发布商品：
 
