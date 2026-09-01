@@ -16,6 +16,9 @@ import java.util.List;
 @Data
 public class AgentReply {
 
+    /** 会话ID。首次对话由后端生成并返回，前端保存后下次带上，即可续接多轮上下文 */
+    private String sessionId;
+
     private String reply;
 
     private ProductPublishDTO draft;

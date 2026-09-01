@@ -18,6 +18,7 @@ public class AgentChatController {
     @PostMapping("/chat")
     public Result<AgentReply> chat(@RequestBody Map<String, String> request) {
         String message = request.getOrDefault("message", "");
-        return Result.success(agentService.chat(message));
+        String sessionId = request.getOrDefault("sessionId", null);
+        return Result.success(agentService.chat(sessionId, message));
     }
 }

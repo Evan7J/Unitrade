@@ -25,7 +25,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -222,6 +224,44 @@ public class ProductServiceImpl implements ProductService {
 
         voPage.setRecords(voList);
         return voPage;
+    }
+
+    /**
+     * 按ID批量查询并转为列表VO。
+     * 供 Agent 语义召回后把命中的商品ID拼出完整卡片数据。
+     */
+    @Override
+    public List<ProductListVO> listByIds(Collection<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<Product> products = productMapper.selectBatchIds(ids);
+        return products.stream().map(this::toListVO).collect(Collectors.toList());
+    }
+
+    /**
+     * 单个 Product 转为 ProductListVO（含发布者昵称、封面、浏览量）
+     */
+    private ProductListVO toListVO(Product product) {
+        ProductListVO vo = new ProductListVO();
+        vo.setId(product.getId());
+        vo.setTitle(product.getTitle());
+        vo.setPrice(product.getPrice());
+        vo.setOriginalPrice(product.getOriginalPrice());
+        vo.setProductCondition(product.getProductCondition());
+        vo.setViewCount(getViewCount(product.getId(), product.getViewCount()));
+        vo.setShippingType(product.getShippingType());
+        vo.setShippingFee(product.getShippingFee());
+        vo.setCreateTime(product.getCreateTime());
+
+        if (StringUtils.hasText(product.getImages())) {
+            vo.setCoverImage(product.getImages().split(",")[0]);
+        }
+
+        User user = userMapper.selectById(product.getUserId());
+        vo.setNickname(user != null ? user.getNickname() : "未知用户");
+        vo.setAvatarUrl(user != null ? user.getAvatarUrl() : null);
+        return vo;
     }
 
     /**

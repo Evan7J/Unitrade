@@ -1,20 +1,29 @@
 package com.example.unitrade.agent;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.unitrade.dto.ProductPublishDTO;
 import com.example.unitrade.dto.ProductQueryDTO;
+import com.example.unitrade.entity.AgentMessage;
 import com.example.unitrade.entity.Category;
+import com.example.unitrade.mapper.AgentMessageMapper;
 import com.example.unitrade.service.CategoryService;
 import com.example.unitrade.service.ProductService;
 import com.example.unitrade.vo.ProductListVO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,13 +34,30 @@ public class AgentService {
     private final ProductService productService;
     private final CategoryService categoryService;
     private final ObjectMapper objectMapper;
+    private final AgentMessageMapper agentMessageMapper;
+    private final SemanticSearchClient semanticSearchClient;
 
     private static final int MAX_ROUNDS = 8;
 
-    public AgentReply chat(String userMessage) {
-        List<Map<String, Object>> messages = new ArrayList<>();
-        messages.add(Map.of("role", "system", "content", SYSTEM_PROMPT));
-        messages.add(Map.of("role", "user", "content", userMessage));
+    /** 单次会话从历史载入的最大消息条数 */
+    private static final int MAX_HISTORY_MESSAGES = 20;
+    /** 单次会话重建上下文的最大字符数（超出则裁剪最旧的） */
+    private static final int MAX_HISTORY_CHARS = 6000;
+    /** 语义召回补足的商品上限 */
+    private static final int SEMANTIC_TOP_K = 8;
+
+    /**
+     * 多轮对话入口【带会话持久化】
+     *
+     * @param sessionId   会话ID，null 或空则由本方法生成新会话；前端下次带上即可续接上下文
+     * @param userMessage 用户消息
+     */
+    public AgentReply chat(String sessionId, String userMessage) {
+        String sid = resolveSessionId(sessionId);
+
+        // 1. 记录本条用户消息，并载入该会话历史做上下文
+        saveMessage(sid, "user", userMessage);
+        List<Map<String, Object>> messages = buildMessages(sid, userMessage);
 
         List<Map<String, Object>> tools = buildTools();
         ProductPublishDTO draft = null;
@@ -43,9 +69,12 @@ public class AgentService {
             List<Map<String, Object>> toolCalls = extractToolCalls(message);
 
             if (toolCalls.isEmpty()) {
+                String text = message.get("content") == null ? "" : message.get("content").toString();
+                // 2. 落库最终文本回复，构成可续接的历史
+                saveMessage(sid, "assistant", text);
                 AgentReply reply = new AgentReply();
-                Object content = message.get("content");
-                reply.setReply(content == null ? "" : content.toString());
+                reply.setSessionId(sid);
+                reply.setReply(text);
                 reply.setDraft(draft);
                 reply.setProducts(products);
                 return reply;
@@ -69,10 +98,72 @@ public class AgentService {
             }
         }
         AgentReply reply = new AgentReply();
+        reply.setSessionId(sid);
         reply.setReply("抱歉，这次处理有点复杂，请换个说法再试试。");
         reply.setDraft(draft);
         reply.setProducts(products);
         return reply;
+    }
+
+    /**
+     * 生成或沿用会话ID。
+     * 会话以 sessionId 为隔离粒度：不同 sessionId 的上下文互不相通。
+     */
+    private String resolveSessionId(String sessionId) {
+        if (StringUtils.hasText(sessionId)) {
+            return sessionId;
+        }
+        return UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+    }
+
+    /**
+     * 组装发给模型的消息列表：system 提示 + 裁剪后的历史 + 当前用户消息。
+     *
+     * 历史只重放 user/assistant 纯文本对话，不含带工具调用的中间消息，
+     * 从而避免模型要求缺失的 tool 结果导致上下文校验失败。
+     */
+    private List<Map<String, Object>> buildMessages(String sessionId, String userMessage) {
+        List<Map<String, Object>> messages = new ArrayList<>();
+        messages.add(Map.of("role", "system", "content", SYSTEM_PROMPT));
+
+        List<AgentMessage> history = loadTrimmedHistory(sessionId);
+        for (AgentMessage m : history) {
+            messages.add(Map.of("role", m.getRole(), "content", m.getContent()));
+        }
+        messages.add(Map.of("role", "user", "content", userMessage));
+        return messages;
+    }
+
+    /**
+     * 载入该会话历史并按上下文窗口裁剪：
+     * 先按时间升序取最近 MAX_HISTORY_MESSAGES 条，再从最旧丢弃，直到字符数不超上限。
+     */
+    private List<AgentMessage> loadTrimmedHistory(String sessionId) {
+        List<AgentMessage> all = agentMessageMapper.selectList(
+                new LambdaQueryWrapper<AgentMessage>()
+                        .eq(AgentMessage::getSessionId, sessionId)
+                        .orderByAsc(AgentMessage::getCreateTime)
+        );
+        List<AgentMessage> recent = all.size() > MAX_HISTORY_MESSAGES
+                ? all.subList(all.size() - MAX_HISTORY_MESSAGES, all.size())
+                : all;
+
+        List<AgentMessage> result = new ArrayList<>(recent);
+        int total = result.stream().mapToInt(m -> m.getContent() == null ? 0 : m.getContent().length()).sum();
+        while (total > MAX_HISTORY_CHARS && result.size() > 1) {
+            AgentMessage removed = result.remove(0);
+            total -= removed.getContent() == null ? 0 : removed.getContent().length();
+        }
+        return result;
+    }
+
+    private void saveMessage(String sessionId, String role, String content) {
+        AgentMessage msg = new AgentMessage();
+        msg.setSessionId(sessionId);
+        msg.setRole(role);
+        msg.setContent(content);
+        msg.setCreateTime(LocalDateTime.now());
+        agentMessageMapper.insert(msg);
     }
 
     private static final String SYSTEM_PROMPT = """
@@ -128,11 +219,18 @@ public class AgentService {
         return result;
     }
 
+    /**
+     * 商品搜索工具【RAG 语义召回 + 关键词融合】
+     *
+     * 先按原有关键词/同义词跑 MySQL 分页搜索拿主结果；
+     * 再用语义检索服务召回相关商品 ID，把未出现在主结果里的商品补足到尾部。
+     * 语义服务不可用时，recall 返回空列表，结果即退化为原有 MySQL 搜索，不影响可用性。
+     */
     private List<ProductListVO> searchProducts(Map<String, Object> args) throws Exception {
+        String keyword = args.get("keyword") == null ? "" : args.get("keyword").toString();
+
         ProductQueryDTO query = new ProductQueryDTO();
-        if (args.get("keyword") != null) {
-            query.setKeyword(args.get("keyword").toString());
-        }
+        query.setKeyword(keyword);
         if (args.get("minPrice") != null) {
             query.setMinPrice(new BigDecimal(args.get("minPrice").toString()));
         }
@@ -144,7 +242,61 @@ public class AgentService {
         }
         query.setPage(1);
         query.setSize(20);
-        return productService.pageQuery(query).getRecords();
+
+        // 1) 主结果：MySQL 关键词 + 同义词
+        List<ProductListVO> main = productService.pageQuery(query).getRecords();
+
+        // 2) 语义补充：检索服务可按语义召回，即使长句不命中关键词也能兜底
+        List<ProductListVO> supplement = semanticComplement(keyword, query, main);
+
+        // 3) 合并并去重（按商品ID）
+        LinkedHashSet<Long> ids = new LinkedHashSet<>();
+        List<ProductListVO> merged = new ArrayList<>();
+        for (ProductListVO vo : main) {
+            if (ids.add(vo.getId())) {
+                merged.add(vo);
+            }
+        }
+        for (ProductListVO vo : supplement) {
+            if (ids.add(vo.getId())) {
+                merged.add(vo);
+            }
+        }
+        return merged;
+    }
+
+    /**
+     * 用语义检索服务召回商品，按价格筛选后返回不在主力结果里的商品。
+     */
+    private List<ProductListVO> semanticComplement(String keyword, ProductQueryDTO query,
+                                                   List<ProductListVO> main) {
+        if (!StringUtils.hasText(keyword)) {
+            return List.of();
+        }
+        List<Number> ids = semanticSearchClient.recall(keyword, SEMANTIC_TOP_K);
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        Collection<Long> idList = ids.stream().map(Number::longValue).toList();
+
+        Set<Long> mainIds = main.stream().map(ProductListVO::getId).collect(Collectors.toSet());
+        return productService.listByIds(idList).stream()
+                .filter(vo -> !mainIds.contains(vo.getId()))
+                .filter(vo -> priceMatch(vo, query))
+                .collect(Collectors.toList());
+    }
+
+    private boolean priceMatch(ProductListVO vo, ProductQueryDTO query) {
+        if (vo.getPrice() == null) {
+            return false;
+        }
+        if (query.getMinPrice() != null && vo.getPrice().compareTo(query.getMinPrice()) < 0) {
+            return false;
+        }
+        if (query.getMaxPrice() != null && vo.getPrice().compareTo(query.getMaxPrice()) > 0) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -223,7 +375,7 @@ public class AgentService {
         draftProps.put("price", Map.of("type", "number", "description", "售价（元）"));
         draftProps.put("originalPrice", Map.of("type", "number", "description", "原价（元），可省略"));
         draftProps.put("productCondition", Map.of("type", "integer", "description", "成色：1全新 2几乎全新 3轻微使用痕迹 4明显使用痕迹"));
-        draftProps.put("categoryName", Map.of("type", "string", "description", "分类名称，如 数码产品、书籍教材、服饰鞋包、生活用品、运动户外、其他"));
+        draftProps.put("categoryName", Map.of("type", "string", "description", "分类名称，如 数码产品、书籍教材、服饰鞋包、运动户外、其他"));
         draftProps.put("shippingType", Map.of("type", "integer", "description", "物流方式：1面交无需邮寄 2付邮邮寄 3包邮，默认3"));
 
         tools.add(buildTool("draftProduct",

@@ -11,6 +11,13 @@ deepseek:
   base-url: https://api.deepseek.com
   model: deepseek-v4-flash
 
+# 语义检索服务（RAG 检索端，独立 Python 服务）
+# 若未启动或不可用，Agent 商品搜索会自动降级回退到 MySQL 关键词搜索，不影响主流程
+semantic:
+  search:
+    base-url: http://localhost:8000
+    enabled: true
+
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver

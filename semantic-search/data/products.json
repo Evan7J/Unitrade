@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "title": "二手 iPhone 13 128G 蓝色",
+    "description": "95新，无磕碰，电池健康88%，附原装充电线",
+    "categoryName": "数码产品",
+    "tags": "手机 苹果 二手 iphone"
+  },
+  {
+    "id": 2,
+    "title": "考研数学复习全书",
+    "description": "2026版全新未拆封，张宇基础30讲",
+    "categoryName": "书籍教材",
+    "tags": "考研 教材 数学"
+  },
+  {
+    "id": 3,
+    "title": "宿舍护眼台灯",
+    "description": "充电式三档调光，闲置九成新",
+    "categoryName": "生活用品",
+    "tags": "台灯 学习 电器"
+  },
+  {
+    "id": 4,
+    "title": "轻薄笔记本 i5 16G 512G",
+    "description": "办公学习够用，成色好，带原装充电器",
+    "categoryName": "数码产品",
+    "tags": "电脑 笔记本 办公"
+  },
+  {
+    "id": 5,
+    "title": "华为蓝牙耳机 FreeBuds 5i",
+    "description": "九成新，音质好，续航久",
+    "categoryName": "数码产品",
+    "tags": "耳机 华为 蓝牙"
+  }
+]

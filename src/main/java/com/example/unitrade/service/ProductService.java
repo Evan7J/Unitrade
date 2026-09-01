@@ -7,6 +7,9 @@ import com.example.unitrade.dto.ProductUpdateDTO;
 import com.example.unitrade.vo.ProductListVO;
 import com.example.unitrade.vo.ProductVO;
 
+import java.util.Collection;
+import java.util.List;
+
 /**
  * 商品服务接口
  */
@@ -23,6 +26,12 @@ public interface ProductService {
      * @return 分页结果
      */
     Page<ProductListVO> pageQuery(ProductQueryDTO dto);
+
+    /**
+     * 按ID批量查询并转为列表VO。
+     * 供 Agent 语义召回后，把命中的商品ID拼出完整卡片数据。
+     */
+    List<ProductListVO> listByIds(Collection<Long> ids);
 
     /**
      * 查看商品详情
