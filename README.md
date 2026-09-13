@@ -64,7 +64,7 @@ agent智能问答：
 
 ## AI 闲置助手
 
-基于 DeepSeek 大模型实现的自研 Agent，不依赖 Spring AI 框架，直接通过 HTTP 调用 DeepSeek API 并实现工具调用循环（ReAct 模式）。
+基于 DeepSeek 大模型实现的自研 Agent，不依赖 Spring AI 框架，直接通过 HTTP 调用 DeepSeek API 并实现工具调用循环（ReAct 模式）。（最新改动为使用springai框架）
 
 - 模型：DeepSeek V4 Flash（关闭思考模式，保证工具调用稳定）
 - 工具：`searchProducts`（商品搜索，含同义词扩展）、`listCategories`（分类查询）、`draftProduct`（一键生成发布草稿）
