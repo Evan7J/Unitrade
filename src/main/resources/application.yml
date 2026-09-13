@@ -11,14 +11,37 @@ deepseek:
   base-url: https://api.deepseek.com
   model: deepseek-v4-flash
 
-# 语义检索服务（RAG 检索端，独立 Python 服务）
-# 若未启动或不可用，Agent 商品搜索会自动降级回退到 MySQL 关键词搜索，不影响主流程
-semantic:
-  search:
-    base-url: http://localhost:8000
-    enabled: true
+app:
+  vector:
+    # 商品向量索引持久化文件，首次启动构建后写入，之后直接加载
+    index-file: ./data/product-vector-index.json
+    # 本地 ONNX embedding 模型资源（已预下载到 data/models/，启动零下载、不联网）
+    # 中文多语言模型 paraphrase-multilingual-MiniLM-L12-v2，语义更贴近原 text2vec
+    # 换机器/换环境时，如 data/models 下没有模型文件，改回下面的镜像 URL 让它首次自动拉取：
+    #   model-url: https://hf-mirror.com/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2/resolve/main/onnx/model.onnx
+    #   tokenizer-url: https://hf-mirror.com/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2/resolve/main/tokenizer.json
+    # 若镜像也不可用，可改用 spring-ai 官方 all-MiniLM（英文，github 可达）：
+    #   model-url: https://github.com/spring-projects/spring-ai/raw/main/models/spring-ai-transformers/src/main/resources/onnx/all-MiniLM-L6-v2/model.onnx
+    #   tokenizer-url: https://raw.githubusercontent.com/spring-projects/spring-ai/main/models/spring-ai-transformers/src/main/resources/onnx/all-MiniLM-L6-v2/tokenizer.json
+    model-url: file:C:/Users/29153/Desktop/UniTrade/Uni-trade/data/models/model.onnx
+    tokenizer-url: file:C:/Users/29153/Desktop/UniTrade/Uni-trade/data/models/tokenizer.json
 
 spring:
+  autoconfigure:
+    # 只用 RagConfig 里自定义的 EmbeddingModel，排除自动配置的重复 bean
+    exclude:
+      - org.springframework.ai.model.transformers.autoconfigure.TransformersEmbeddingModelAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiEmbeddingAutoConfiguration
+  ai:
+    transformers:
+      # spring-ai 本地 ONNX embedding 的模型缓存目录
+      cache-directory: ./data/spring-ai-transformer-cache
+    openai:
+      api-key: ${DEEPSEEK_API_KEY}
+      base-url: https://api.deepseek.com
+      chat:
+        options:
+          model: deepseek-v4-flash
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/campus_trade?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai

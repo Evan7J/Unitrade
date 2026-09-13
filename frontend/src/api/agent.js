@@ -28,3 +28,68 @@ import request from '../utils/request'
 // @returns {Promise<{reply: string, draft: object|null}>}
 export const agentChat = (message) =>
   request.post('/agent/chat', { message }, { timeout: 60000 })
+
+// 和 AI 助手流式对话（SSE 逐字输出）
+// 参数：message 用户输入；sessionId 已有会话ID（新会话传 null，后端生成后通过 meta 返回）
+// callbacks: { onToken(content), onMeta({sessionId,draft,products}), onError(err) }
+// onMeta 在流结束后触发（sessionId 用于续接多轮，draft/products 可能为 null）
+export const agentStream = (message, sessionId, { onToken, onMeta, onError } = {}) =>
+  new Promise((resolve) => {
+    const base = (request.defaults && request.defaults.baseURL) || '/api'
+    let meta = null
+
+    fetch(`${base}/agent/chat/stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, sessionId }),
+    })
+      .then((resp) => {
+        if (!resp.ok || !resp.body) throw new Error('stream request failed')
+        const reader = resp.body.getReader()
+        const decoder = new TextDecoder('utf-8')
+        let buffer = ''
+
+        const pump = () =>
+          reader
+            .read()
+            .then(({ done, value }) => {
+              if (done) {
+                onMeta && onMeta(meta)
+                resolve()
+                return
+              }
+              buffer += decoder.decode(value, { stream: true })
+              buffer = consumeSSE(buffer)
+              pump()
+            })
+            .catch((err) => {
+              onError && onError(err)
+              onMeta && onMeta(meta)
+              resolve()
+            })
+
+        pump()
+      })
+      .catch((err) => {
+        onError && onError(err)
+        onMeta && onMeta(meta)
+        resolve()
+      })
+
+    const consumeSSE = (buf) => {
+      const parts = buf.split('\n\n')
+      parts.slice(0, -1).forEach((part) => {
+        part.split('\n').forEach((line) => {
+          if (!line.startsWith('data:')) return
+          const data = line.slice(5).replace(/^ /, '')
+          if (!data) return
+          if (data.startsWith('__META__')) {
+            meta = JSON.parse(data.slice('__META__'.length))
+          } else {
+            onToken && onToken(data)
+          }
+        })
+      })
+      return parts[parts.length - 1]
+    }
+  })

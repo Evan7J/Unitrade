@@ -35,3 +35,6 @@ build/
 
 # Uploads
 uploads/
+
+# 本地向量索引与 ONNX 模型（470MB 大文件，不应进版本库）
+data/

@@ -121,9 +121,9 @@
 </template>
 
 <script setup>
-import { ref, nextTick, onMounted } from 'vue'
+import { ref, reactive, nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { agentChat } from '../../api/agent'
+import { agentStream } from '../../api/agent'
 
 const router = useRouter()
 
@@ -132,6 +132,8 @@ const messages = ref([])
 const input = ref('')
 const loading = ref(false)
 const msgArea = ref(null)
+// 当前会话ID：首次对话后端生成返回，之后带上即可续接多轮上下文
+const sessionId = ref(null)
 
 // 成色数字转文字
 const conditionText = (c) => {
@@ -147,7 +149,7 @@ const scrollToBottom = () => {
   })
 }
 
-// 发送消息
+// 发送消息（流式打字机）
 const handleSend = async () => {
   const text = input.value.trim()
   if (!text || loading.value) return
@@ -157,19 +159,29 @@ const handleSend = async () => {
   input.value = ''
   scrollToBottom()
 
+  // 先推一条空的 AI 消息，流式内容逐步累积进去
+  const aiMsg = reactive({ role: 'assistant', content: '', draft: null, products: null })
+  messages.value.push(aiMsg)
   loading.value = true
+
   try {
-    const res = await agentChat(text)
-    const data = res.data || {}
-    // 追加 AI 回复，draft 可能为 null（导购场景）或对象（发布场景）
-    messages.value.push({
-      role: 'assistant',
-      content: data.reply || '抱歉，我没理解你的意思。',
-      draft: data.draft || null,
-      products: data.products || null,
+    await agentStream(text, sessionId.value, {
+      onToken: (tok) => {
+        aiMsg.content += tok
+        scrollToBottom()
+      },
+      // 流结束后到达：携带会话ID/草稿/商品卡片
+      onMeta: (meta) => {
+        if (!meta) return
+        if (meta.sessionId) sessionId.value = meta.sessionId
+        aiMsg.draft = meta.draft || null
+        aiMsg.products = meta.products || null
+        if (aiMsg.draft || aiMsg.products) scrollToBottom()
+      },
     })
+    if (!aiMsg.content) aiMsg.content = '抱歉，我没理解你的意思。'
   } catch (e) {
-    messages.value.push({ role: 'assistant', content: '网络开小差了，请稍后再试。', draft: null, products: null })
+    aiMsg.content = aiMsg.content || '网络开小差了，请稍后再试。'
   } finally {
     loading.value = false
     scrollToBottom()
