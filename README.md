@@ -24,7 +24,7 @@
 
 确保 MySQL 和 Redis 先跑起来，然后导入项目根目录下的 `init.sql` 建库建表。
 
-```bash
+```bash  
 git clone https://github.com/Evan7J/unitrade.git
 cd unitrade
 # 设置环境变量 DEEPSEEK_API_KEY（DeepSeek 密钥）和 DB_PASSWORD（数据库密码），然后启动
@@ -33,7 +33,7 @@ mvn spring-boot:run
 
 前端：
 
-```bash
+```bash  
 cd frontend
 npm install
 npm run dev
@@ -61,9 +61,6 @@ agent智能问答：
 
 ![后台Dashboard](screenshots/admin-dashboard.png)
 
-分类管理：
-
-![分类管理](screenshots/category-manage.png)
 
 ## AI 闲置助手
 
