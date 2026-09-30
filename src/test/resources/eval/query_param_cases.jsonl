@@ -1,0 +1,40 @@
+{"id":"q001","query":"有没有两千以内的 iPad","expect":{"keyword":"ipad","minPrice":null,"maxPrice":2000,"category":"数码产品"}}
+{"id":"q002","query":"想收一台二手笔记本电脑，预算五千","expect":{"keyword":"笔记本电脑","minPrice":null,"maxPrice":5000,"category":"数码产品"}}
+{"id":"q003","query":"有没有便宜的机械键盘","expect":{"keyword":"机械键盘","minPrice":null,"maxPrice":null,"category":"数码产品"}}
+{"id":"q004","query":"求购高数教材","expect":{"keyword":"高数教材","minPrice":null,"maxPrice":null,"category":"书籍教材"}}
+{"id":"q005","query":"冬天穿的羽绒服，300 块以内","expect":{"keyword":"羽绒服","minPrice":null,"maxPrice":300,"category":"服饰鞋包"}}
+{"id":"q006","query":"想买个篮球，100 到 200 之间","expect":{"keyword":"篮球","minPrice":100,"maxPrice":200,"category":"运动户外"}}
+{"id":"q007","query":"iPhone 15 有没有人出","expect":{"keyword":"iphone15","minPrice":null,"maxPrice":null,"category":"数码产品"}}
+{"id":"q008","query":"500 块以内收个显示器","expect":{"keyword":"显示器","minPrice":null,"maxPrice":500,"category":"数码产品"}}
+{"id":"q009","query":"有没有考研英语真题","expect":{"keyword":"考研英语真题","minPrice":null,"maxPrice":null,"category":"书籍教材"}}
+{"id":"q010","query":"想买双跑鞋，400 以下","expect":{"keyword":"跑鞋","minPrice":null,"maxPrice":400,"category":"运动户外"}}
+{"id":"q011","query":"收个二手蓝牙耳机，不要太贵的","expect":{"keyword":"蓝牙耳机","minPrice":null,"maxPrice":null,"category":"数码产品"}}
+{"id":"q012","query":"有没有二手的四六级词汇书","expect":{"keyword":"四六级词汇书","minPrice":null,"maxPrice":null,"category":"书籍教材"}}
+{"id":"q013","query":"求一件二手卫衣，价格 50 到 100","expect":{"keyword":"卫衣","minPrice":50,"maxPrice":100,"category":"服饰鞋包"}}
+{"id":"q014","query":"想收个哑铃，最好 200 以内","expect":{"keyword":"哑铃","minPrice":null,"maxPrice":200,"category":"运动户外"}}
+{"id":"q015","query":"有没有二手的台灯","expect":{"keyword":"台灯","minPrice":null,"maxPrice":null,"category":"其他"}}
+{"id":"q016","query":"收一个宿舍小风扇","expect":{"keyword":"小风扇","minPrice":null,"maxPrice":null,"category":"其他"}}
+{"id":"q017","query":"求购一把吉他","expect":{"keyword":"吉他","minPrice":null,"maxPrice":null,"category":"其他"}}
+{"id":"q018","query":"有没有 iPad 保护壳","expect":{"keyword":"ipad保护壳","minPrice":null,"maxPrice":null,"category":"数码产品"}}
+{"id":"q019","query":"收个相机，预算 3000 左右","expect":{"keyword":"相机","minPrice":null,"maxPrice":3000,"category":"数码产品"}}
+{"id":"q020","query":"想买本线代教材，20 块以内","expect":{"keyword":"线代教材","minPrice":null,"maxPrice":20,"category":"书籍教材"}}
+{"id":"q021","query":"有没有二手的登山杖","expect":{"keyword":"登山杖","minPrice":null,"maxPrice":null,"category":"运动户外"}}
+{"id":"q022","query":"收个充电宝，100 以内","expect":{"keyword":"充电宝","minPrice":null,"maxPrice":100,"category":"数码产品"}}
+{"id":"q023","query":"求购大学物理教材","expect":{"keyword":"大学物理教材","minPrice":null,"maxPrice":null,"category":"书籍教材"}}
+{"id":"q024","query":"有没有二手的马丁靴","expect":{"keyword":"马丁靴","minPrice":null,"maxPrice":null,"category":"服饰鞋包"}}
+{"id":"q025","query":"想收个滑板代步","expect":{"keyword":"滑板","minPrice":null,"maxPrice":null,"category":"运动户外"}}
+{"id":"q026","query":"有没有二手的电吹风","expect":{"keyword":"电吹风","minPrice":null,"maxPrice":null,"category":"其他"}}
+{"id":"q027","query":"收个游戏鼠标，150 以内","expect":{"keyword":"游戏鼠标","minPrice":null,"maxPrice":150,"category":"数码产品"}}
+{"id":"q028","query":"有没有二手的羽毛球拍","expect":{"keyword":"羽毛球拍","minPrice":null,"maxPrice":null,"category":"运动户外"}}
+{"id":"q029","query":"求购一本日语教材","expect":{"keyword":"日语教材","minPrice":null,"maxPrice":null,"category":"书籍教材"}}
+{"id":"q030","query":"想收个二手显卡，2000 以上也能接受","expect":{"keyword":"显卡","minPrice":2000,"maxPrice":null,"category":"数码产品"}}
+{"id":"q031","query":"有没有便宜点的双肩包","expect":{"keyword":"双肩包","minPrice":null,"maxPrice":null,"category":"服饰鞋包"}}
+{"id":"q032","query":"收一双足球鞋，300 以内","expect":{"keyword":"足球鞋","minPrice":null,"maxPrice":300,"category":"运动户外"}}
+{"id":"q033","query":"有没有二手的瑜伽垫","expect":{"keyword":"瑜伽垫","minPrice":null,"maxPrice":null,"category":"运动户外"}}
+{"id":"q034","query":"求购二手洗衣机","expect":{"keyword":"洗衣机","minPrice":null,"maxPrice":null,"category":"其他"}}
+{"id":"q035","query":"想买台二手 Kindle","expect":{"keyword":"kindle","minPrice":null,"maxPrice":null,"category":"数码产品"}}
+{"id":"q036","query":"求购数据结构教材","expect":{"keyword":"数据结构教材","minPrice":null,"maxPrice":null,"category":"书籍教材"}}
+{"id":"q037","query":"收个二手行李箱，200 块左右","expect":{"keyword":"行李箱","minPrice":null,"maxPrice":200,"category":"其他"}}
+{"id":"q038","query":"有没有二手的保温杯","expect":{"keyword":"保温杯","minPrice":null,"maxPrice":null,"category":"其他"}}
+{"id":"q039","query":"想收个二手麦克风，500 以内","expect":{"keyword":"麦克风","minPrice":null,"maxPrice":500,"category":"数码产品"}}
+{"id":"q040","query":"求一件二手冲锋衣，价格 200 到 400","expect":{"keyword":"冲锋衣","minPrice":200,"maxPrice":400,"category":"运动户外"}}

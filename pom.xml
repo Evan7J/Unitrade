@@ -50,10 +50,10 @@
             <artifactId>spring-ai-starter-model-transformers</artifactId>
         </dependency>
 
-        <!-- Spring AI：向量检索（SimpleVectorStore，替代原 Python FAISS） -->
+        <!-- Spring AI：Milvus 向量库（替代 SimpleVectorStore，支持持久化与大规模检索） -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-vector-store</artifactId>
+            <artifactId>spring-ai-starter-vector-store-milvus</artifactId>
         </dependency>
 
         
@@ -99,11 +99,24 @@
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
-        <!-- Guava RateLimiter：接口限流 -->
+        <!--
+          Guava RateLimiter 已移除（原用于接口限流）：
+          单机限流在多实例部署下会自动失效（各实例各限各的，放行量 = 配置值 × 实例数），
+          且其 ConcurrentHashMap 按 IP 累积、永不清理，可被伪造 IP 打爆内存。
+          现改用 Redis + Lua 分布式令牌桶，见 config/RedisRateLimiter。
+        -->
+
+        <!--
+          Spring AI Alibaba Graph：议价链路的状态图编排（对齐简历要点 1「受控编排」）
+
+          ⚠️ 版本必须与 Spring AI 对齐：1.0.0.x 系列依赖 spring-ai-commons:1.0.0（与本项目一致）；
+          而 1.1.x / 2.x 系列依赖 spring-ai-commons:1.1.2+，会与本项目的 Spring AI 1.0.0 冲突。
+          换版本前先确认它依赖的 spring-ai-commons 版本。
+        -->
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>33.4.0-jre</version>
+            <groupId>com.alibaba.cloud.ai</groupId>
+            <artifactId>spring-ai-alibaba-graph-core</artifactId>
+            <version>1.0.0.2</version>
         </dependency>
 
         <!-- Jackson Java 8 时间类型序列化支持 -->

@@ -160,6 +160,17 @@
             <el-icon :size="18"><ChatDotRound /></el-icon>
             聊一聊
           </el-button>
+          <!-- 议价入口：进入独立的议价面板（不影响原有聊天） -->
+          <el-button
+            v-if="!isSelfProduct"
+            type="warning"
+            plain
+            size="large"
+            :disabled="detail.status !== 1"
+            @click="router.push(`/front/negotiation/${detail.id}`)"
+          >
+            谈个价
+          </el-button>
           <el-button
             type="warning"
             size="large"

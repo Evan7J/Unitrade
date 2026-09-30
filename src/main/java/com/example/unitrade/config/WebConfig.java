@@ -22,6 +22,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     private final JwtInterceptor jwtInterceptor;
     private final RateLimiterInterceptor rateLimiterInterceptor;
+    private final AdminInterceptor adminInterceptor;
 
     /** 上传文件目录，从配置文件注入，与 UploadController 保持一致 */
     @Value("${file.upload-dir:uploads}")
@@ -57,6 +58,18 @@ public class WebConfig implements WebMvcConfigurer {
                         "/api/banner/list"
                 )
                 .order(1); // 限流之后执行
+
+        // 管理员权限校验：/api/admin/** 需要 role = admin
+        //
+        // 为什么必须单独加这一层：JwtInterceptor 只回答"你是谁"（认证），
+        // 不回答"你能不能"（授权）。只有认证没有授权 = 任何登录用户都是管理员。
+        //
+        // 顺序必须是 限流(0) → JWT(1) → Admin(2)：
+        // AdminInterceptor 依赖 JwtInterceptor 放进 ThreadLocal 的 userId，
+        // 反过来就永远拿不到用户身份。
+        registry.addInterceptor(adminInterceptor)
+                .addPathPatterns("/api/admin/**")
+                .order(2);
     }
 
     /**

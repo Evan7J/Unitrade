@@ -92,6 +92,11 @@ public class OrderServiceImpl implements OrderService {
         order.setBuyerId(buyerId);
         order.setSellerId(product.getUserId());
         order.setProductId(dto.getProductId());
+        // 价格快照：下单这一刻的商品价即是本次成交价。
+        // 之后卖家再改价、或商品被删除，这笔订单的金额都不会跟着变。
+        // （议价场景下 dealPrice 会被议价链路覆盖为谈成的价格）
+        order.setOriginPrice(product.getPrice());
+        order.setDealPrice(product.getPrice());
         order.setStatus(1); // 待付款
         orderMapper.insert(order);
 
@@ -121,12 +126,16 @@ public class OrderServiceImpl implements OrderService {
         order.setPayTime(LocalDateTime.now());
         orderMapper.updateById(order);
 
-        // 商品正式标记为已售出
-        Product product = productMapper.selectById(order.getProductId());
-        if (product != null) {
-            product.setStatus(3); // 已售出
-            productMapper.updateById(product);
-        }
+        // 这里【不再】改商品状态，两重原因：
+        //
+        // 1）原来写的是 product.setStatus(3)，注释说"已售出"，
+        //    但 Product 的定义里 3 是「已下架」——付款后商品会被标成"已下架"，
+        //    语义错了，前端展示也跟着错。
+        // 2）这个动作本身是多余的：create() 里的 CAS 更新已经把商品从
+        //    「在售(1)」改成「已售出/交易中(2)」，商品在"待付款"期间就已不可被
+        //    他人购买。付款只是订单状态的变化，商品的可售性在下单那一刻就已确定。
+        //
+        // 删掉它之后，"一物多卖"的防护完全不受影响（由 create() 的原子更新保证）。
     }
 
     /**
@@ -233,6 +242,10 @@ public class OrderServiceImpl implements OrderService {
             throw new BusinessException("当前状态无法申请退款");
         }
 
+        // 先记录申请退款前的真实状态，供「拒绝退款」时精确回退（见 rejectRefund）。
+        // 少了这个字段，从「已发货(3)」申请的退款被拒绝后只能一律回到「已付款(2)」，
+        // 卖家已经寄出的货就"没发过"了。
+        order.setStatusBeforeRefund(order.getStatus());
         order.setStatus(6); // 退款中
         order.setCancelReason(reason);
         orderMapper.updateById(order);
@@ -282,8 +295,14 @@ public class OrderServiceImpl implements OrderService {
             throw new BusinessException("当前没有退款申请");
         }
 
-        // 回到已付款状态（简化处理，实际应回到申请前的状态）
-        order.setStatus(2);
+        // 回到「申请退款之前」的状态，而不是一律回到「已付款」。
+        // 原来这里写死 status=2 并在注释里承认是"简化处理"，后果是：
+        // 从「已发货(3)」申请的退款被拒后，订单退回「已付款(2)」——
+        // shipTime 还在（货确实发了），状态却显示"还没发货"，
+        // 买卖双方看到的信息互相矛盾，客服也没法判断到底发没发。
+        Integer restoreStatus = order.getStatusBeforeRefund();
+        order.setStatus(restoreStatus != null ? restoreStatus : 2);
+        order.setStatusBeforeRefund(null);
         order.setCancelReason(null);
         orderMapper.updateById(order);
     }
@@ -331,10 +350,20 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    /**
+     * 把「因本订单而被锁定」的商品恢复为在售。
+     *
+     * <p>条件从原来的 {@code ne(status, 1)} 收紧为 {@code eq(status, 2)}。
+     * 原来的写法只要"不是在售"就恢复，于是「已下架(3)」的商品也会被一并恢复 ——
+     * 卖家明明主动下架了，却因为别人下了个单又取消，商品"自己上架了"，
+     * 等于系统覆盖了卖家的明确意图。
+     *
+     * <p>只有「已售出/交易中(2)」才是本订单造成的锁定，也只有它该被恢复。
+     */
     private void restoreProduct(Long productId) {
         productMapper.update(null, new LambdaUpdateWrapper<Product>()
                 .eq(Product::getId, productId)
-                .ne(Product::getStatus, 1)
+                .eq(Product::getStatus, 2)
                 .set(Product::getStatus, 1));
     }
 
@@ -368,7 +397,12 @@ public class OrderServiceImpl implements OrderService {
         vo.setSellerPhone(seller != null ? seller.getPhone() : "***");
         vo.setProductId(order.getProductId());
         vo.setProductTitle(product != null ? product.getTitle() : "已删除");
-        vo.setProductPrice(product != null ? product.getPrice() : null);
+        // 金额取订单快照，不再实时查商品价。
+        // 兜底到 product.getPrice() 只为兼容极早期、快照字段为空的历史数据。
+        vo.setProductPrice(order.getDealPrice() != null
+                ? order.getDealPrice()
+                : (product != null ? product.getPrice() : null));
+        vo.setOriginPrice(order.getOriginPrice());
         vo.setStatus(order.getStatus());
         vo.setStatusText(getStatusText(order.getStatus()));
         vo.setCancelReason(order.getCancelReason());

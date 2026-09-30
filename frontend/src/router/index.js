@@ -21,6 +21,8 @@ const routes = [
       { path: 'publish', name: 'Publish', component: () => import('../views/front/Publish.vue') },
       { path: 'editProduct', name: 'EditProduct', component: () => import('../views/front/EditProduct.vue') },
       { path: 'goodsDetail', name: 'GoodsDetail', component: () => import('../views/front/GoodsDetail.vue') },
+      // 议价面板：path 里带商品 ID，从商品详情页跳转过来
+      { path: 'negotiation/:productId', name: 'Negotiation', component: () => import('../views/front/Negotiation.vue') },
       { path: 'chat', name: 'Chat', component: () => import('../views/front/Chat.vue') },
       { path: 'orders', name: 'Orders', component: () => import('../views/front/Orders.vue') },
       { path: 'favorites', name: 'Favorites', component: () => import('../views/front/Favorites.vue') },

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -41,8 +42,35 @@ public class Order {
     /** 商品ID */
     private Long productId;
 
+    /**
+     * 下单时的商品挂牌价（快照）。
+     *
+     * <p>为什么必须存快照：原来订单金额是实时查 {@code t_product.price} 得来的，
+     * 卖家一改价，历史订单显示的金额就跟着变 —— 账对不上，也无法追溯真实成交价。
+     * 订单是「已发生的事实」，事实不应该随后续的编辑而变化。
+     */
+    private BigDecimal originPrice;
+
+    /**
+     * 实际成交价。
+     *
+     * <p>未议价时等于 {@link #originPrice}；议价达成时为议价价。
+     * 没有这个字段，议价 Agent 谈成的价格就无处落库 ——
+     * 这是接入议价功能的前置依赖。
+     */
+    private BigDecimal dealPrice;
+
     /** 订单状态：1待付款 2已付款 3已发货 4已完成 5已取消 6退款中 7已退款 */
     private Integer status;
+
+    /**
+     * 申请退款前的订单状态。
+     *
+     * <p>用于「拒绝退款」时正确回退：从「已发货(3)」申请的退款被拒，
+     * 必须回到「已发货」，而不是一律回到「已付款(2)」—— 否则发货记录就丢了，
+     * 买家会看到一个"还没发货"的订单，而卖家其实已经寄出去了。
+     */
+    private Integer statusBeforeRefund;
 
     /** 付款时间 */
     private LocalDateTime payTime;

@@ -6,25 +6,29 @@ server:
       enabled: true
       force: true
 
-deepseek:
-  api-key: ${DEEPSEEK_API_KEY}
-  base-url: https://api.deepseek.com
-  model: deepseek-v4-flash
+# ⚠️ 这里原本有一个 deepseek.* 配置块（api-key / base-url / model）。
+#    它没有被任何 Java 代码读取 —— 改它不生效，是"死配置"，已删除。
+#    真实生效的只有下面的 spring.ai.openai.*（Spring AI 的 OpenAI 兼容客户端）。
+#    保留这段说明，是为了避免下次又去改一个不生效的地方。
 
 app:
   vector:
-    # 商品向量索引持久化文件，首次启动构建后写入，之后直接加载
-    index-file: ./data/product-vector-index.json
-    # 本地 ONNX embedding 模型资源（已预下载到 data/models/，启动零下载、不联网）
+    # 是否允许使用向量库（Milvus）。默认 true。
+    # 注意：即使这里是 true，启动时也会先 TCP 探测 Milvus 端口，
+    # 探测不通会自动降级为纯关键词检索（应用照常启动）。
+    # 设为 false 可强制走降级路径，用于验证降级逻辑本身是否正常。
+    enabled: true
+    # 本地 ONNX embedding 模型资源。默认取项目内的相对路径 ./data/models/，
+    # 换机器时把模型放进去即可（data/ 不入版本库，见 .gitignore）。
     # 中文多语言模型 paraphrase-multilingual-MiniLM-L12-v2，语义更贴近原 text2vec
-    # 换机器/换环境时，如 data/models 下没有模型文件，改回下面的镜像 URL 让它首次自动拉取：
-    #   model-url: https://hf-mirror.com/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2/resolve/main/onnx/model.onnx
-    #   tokenizer-url: https://hf-mirror.com/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2/resolve/main/tokenizer.json
+    # 本机没有模型文件时，用环境变量覆盖成下面的镜像 URL，让它首次自动拉取：
+    #   EMBEDDING_MODEL_URL:     https://hf-mirror.com/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2/resolve/main/onnx/model.onnx
+    #   EMBEDDING_TOKENIZER_URL: https://hf-mirror.com/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2/resolve/main/tokenizer.json
     # 若镜像也不可用，可改用 spring-ai 官方 all-MiniLM（英文，github 可达）：
-    #   model-url: https://github.com/spring-projects/spring-ai/raw/main/models/spring-ai-transformers/src/main/resources/onnx/all-MiniLM-L6-v2/model.onnx
-    #   tokenizer-url: https://raw.githubusercontent.com/spring-projects/spring-ai/main/models/spring-ai-transformers/src/main/resources/onnx/all-MiniLM-L6-v2/tokenizer.json
-    model-url: file:C:/Users/29153/Desktop/UniTrade/Uni-trade/data/models/model.onnx
-    tokenizer-url: file:C:/Users/29153/Desktop/UniTrade/Uni-trade/data/models/tokenizer.json
+    #   .../spring-ai/raw/main/models/spring-ai-transformers/src/main/resources/onnx/all-MiniLM-L6-v2/model.onnx
+    #   .../spring-ai/main/models/spring-ai-transformers/src/main/resources/onnx/all-MiniLM-L6-v2/tokenizer.json
+    model-url: ${EMBEDDING_MODEL_URL:file:./data/models/model.onnx}
+    tokenizer-url: ${EMBEDDING_TOKENIZER_URL:file:./data/models/tokenizer.json}
 
 spring:
   autoconfigure:
@@ -32,16 +36,50 @@ spring:
     exclude:
       - org.springframework.ai.model.transformers.autoconfigure.TransformersEmbeddingModelAutoConfiguration
       - org.springframework.ai.model.openai.autoconfigure.OpenAiEmbeddingAutoConfiguration
+      # Milvus 向量库改为条件装配（见 config/VectorStoreConfig）：
+      # 它原本会在启动时就去连 Milvus，连不上直接抛异常导致整个应用起不来。
+      # 排除后由 MilvusAvailabilityCondition 先探测端口，可达才引入，不可达则降级为 NoOpVectorStore。
+      - org.springframework.ai.vectorstore.milvus.autoconfigure.MilvusVectorStoreAutoConfiguration
   ai:
     transformers:
       # spring-ai 本地 ONNX embedding 的模型缓存目录
       cache-directory: ./data/spring-ai-transformer-cache
+    vectorstore:
+      milvus:
+        client:
+          host: localhost
+          port: 19530
+          username: root
+          password: milvus
+        database-name: default
+        collection-name: unitrade_products
+        embedding-dimension: 384
+        index-type: IVF_FLAT
+        metric-type: COSINE
+        initialize-schema: true
     openai:
-      api-key: ${DEEPSEEK_API_KEY}
-      base-url: https://api.deepseek.com
+      # ══════════ 当前供应商：阿里云百炼（DashScope）OpenAI 兼容模式 ══════════
+      # 用的是学生 300 元额度；可选模型里 deepseek-v4.1-flash 是便宜档。
+      #
+      # ⚠️ base-url 绝对不能带 /v1 ！
+      #    实测（从 jar 字节码读取，非猜测）：Spring AI 1.0.0 的
+      #    OpenAiApi$Builder 默认就设了
+      #        baseUrl         = https://api.openai.com
+      #        completionsPath = /v1/chat/completions
+      #    —— 即它自己会拼上 /v1/chat/completions。
+      #    所以这里若写成 ".../compatible-mode/v1"，真实请求会变成
+      #        .../compatible-mode/v1/v1/chat/completions  →  404（已实测）
+      #
+      # 换供应商 = 改这三个环境变量，不动代码：
+      #     LLM_API_KEY  /  LLM_BASE_URL  /  LLM_MODEL
+      api-key: ${LLM_API_KEY:${DASHSCOPE_API_KEY:${DEEPSEEK_API_KEY:}}}
+      base-url: ${LLM_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode}
       chat:
         options:
-          model: deepseek-v4-flash
+          # 便宜档。议价场景里模型只负责"把已经定好的价格说体面"，
+          # 不参与任何数值计算（报价全部由代码算），所以便宜档足够 ——
+          # 把贵模型的算力花在这儿是浪费。
+          model: ${LLM_MODEL:deepseek-v4.1-flash}
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/campus_trade?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
@@ -71,7 +109,93 @@ jwt:
   expire-days: 7
 
 file:
-  upload-dir: C:/Users/29153/Desktop/UniTrade/Uni-trade/uploads
+  # 上传文件的落盘目录（相对项目根目录）；uploads/ 不入版本库
+  upload-dir: ${UPLOAD_DIR:./uploads}
+
+# ══════════════ 模型分级路由与缓存 ══════════════
+# 判断依据很朴素：不是每个环节都值得上最贵的模型。
+#   意图分类 / 参数抽取 → 几十个字要变成一个标签 / 一个 JSON，是【模式识别】
+#   话术生成            → 要自然、要贴人设、还不能乱报价，是【生成】
+# 两档依据阿里云百炼官方文档的能力分档表：
+#   轻量低成本 = deepseek-v4-flash；平衡 = deepseek-v4-pro。
+llm:
+  light-model: ${LLM_LIGHT_MODEL:deepseek-v4-flash}
+  strong-model: ${LLM_STRONG_MODEL:deepseek-v4-pro}
+  # ⭐ 设为 false 时【所有任务都走强模型】—— 这就是成本对照实验的基线组。
+  #    同一份代码、同一条链路，只改这一个开关；这样报出来的降幅
+  #    才是"分级路由带来的"，而不是"两份代码之间的差异"。
+  routing-enabled: ${LLM_ROUTING_ENABLED:true}
+  # 内容哈希缓存：意图分类 / 参数抽取 / 话术生成（三者都是纯映射）。
+  # ⚠️ 报价绝不缓存 —— 它依赖会话状态，命中旧值会造成报价回升、击穿单调性。
+  cache-enabled: ${LLM_CACHE_ENABLED:true}
+  cache-ttl-minutes: 120
+  # ── 按模型分档计价（元 / 每百万 token）─────────────────────────────
+  # 数据来源：DeepSeek 官方定价页（api-docs.deepseek.com/zh-cn/quick_start/pricing），2026-09-26 查得。
+  #   原价       deepseek-v4-pro = 输入 12 / 输出 24
+  #   2026-06-01 起长期价（原定价的 1/4）= 输入 3 / 输出 6   ← 这里用的是这个
+  #   deepseek-v4-flash 一直是 输入 1 / 输出 2
+  # 交叉验证：阿里云开发者社区《DeepSeek-V4 完整技术解析》给出的 Flash/Pro 单价与此一致。
+  #
+  # ⚠️ 两个注意点（面试容易被追问）：
+  #   ① 这是【国产区平时价】。DeepSeek 有峰谷定价：9:00-12:00 / 14:00-18:00 翻倍，
+  #      所以"成本 ¥X"必须写明是按什么时段算的；
+  #   ② 上下文缓存命中的输入价低到 0.02-0.025 元，是另一个数量级 ——
+  #      但我们算的是【应用层】缓存（直接不发起请求），与它无关，别混着说。
+  #
+  # 为什么要分模型配：分级路由之后用单一单价算成本会系统性低估 ——
+  # 强模型那部分花掉的钱，会被按轻量模型的单价算进去（这里差了 3 倍）。
+  pricing:
+    deepseek-v4-flash:
+      input-per-mtok: 1.0
+      output-per-mtok: 2.0
+    deepseek-v4-pro:
+      input-per-mtok: 3.0
+      output-per-mtok: 6.0
+
+# ══════════════ 议价 Agent ══════════════
+negotiation:
+  # Agent 的自主轮次上限（要点 1「最大 5 轮上限」）。
+  # 为什么必须有：议价是零和博弈，买家有动机一直磨；而"首轮锚定 + 逐轮衰减"
+  # 每多一轮就多让一点 —— 没有上限，足够耐心的买家能把报价一路磨到授权边界。
+  # 达到上限后不再自动让步，挂起转人工（由卖家在 human-decision 接口决定）。
+  max-rounds: 5
+  # ── 定价：首轮锚点 ────────────────────────────────────────────
+  # ⚠️ 这里的三个值都是【产品参数】，不是数学结论。改动它们不影响安全性，
+  #    但会改变"卖家守价"和"促成交易"之间的平衡，所以放在配置里而不是代码常量里。
+  pricing:
+    # 首轮让出「可让空间（挂牌价 − 底价）」的比例。
+    #   0.40 → 首轮让得多，5 轮内能用满授权空间（用满度 96.9%），成交率优先；
+    #   0.25 → 首轮让得少，5 轮内只用满 84.6%，卖家守价优先。
+    # 约束：必须严格小于可让空间上限（刚上架 0.80 / 挂满 30 天 0.95），
+    #       否则衰减比 q ≤ 0，报价不再单调递减 —— 写错会在构造授权区间时当场抛异常。
+    anchor-ratio: ${ANCHOR_RATIO:0.40}
+    # 会话锚点扰动幅度（basis point，1bp = 0.01%）。1500 = ±15%。
+    # 为什么需要它：锚点若是固定常数，底价能被一行算式精确反解
+    # （底价 = 挂牌价 − (挂牌价 − 首轮报价) ÷ 锚点比例，实测误差 ≤ 2 分）。
+    # 加扰动后，反解误差上界 = 可让空间 × 该幅度（h=¥400 时约 ±¥60）。
+    # 设为 0 等于关闭防护，只用于对照实验。
+    anchor-jitter-bp: ${ANCHOR_JITTER_BP:1500}
+    # 扰动派生密钥。⚠️ 生产必须用环境变量覆盖：
+    #    它一旦泄露，攻击者可以离线复现每个商品的扰动，防护等于没有。
+    anchor-jitter-secret: ${ANCHOR_JITTER_SECRET:unitrade-dev-anchor-secret}
+  # ── token 单价（元 / 每百万 token）──────────────────────────────
+  # ⚠️ 这两个是【占位值】，必须换成你供应商的真实定价，
+  #    否则算出来的"单次议价成本"就是编的 —— 面试一问"单价哪来的"就露。
+  #    查法：供应商定价页 → 输入/输出分别抄 → 填在这里。
+  cost:
+    input-per-mtok: 1.0
+    output-per-mtok: 8.0
+  talk:
+    # 话术生成器实现：
+    #   llm      → 调大模型生成自然话术（生产/演示用）
+    #   template → 纯模板拼接（输出可复现，评测与回归测试用）
+    #
+    # 默认用 llm。安全性不依赖它的选择：
+    #   · LlmTalkGenerator 只拿到"引擎已经算好的那一个价格"，物理上不知道底价；
+    #   · 生成后会做数值一致性校验，话术里出现别的金额直接判不合格；
+    #   · 校验不过 / 调用失败 / 超时 / 限流 → 自动退回模板，永远有一句能发出去。
+    # 所以 key 失效也不会让议价中断，只会话术变朴素。
+    generator: llm
 
 mybatis-plus:
   configuration:

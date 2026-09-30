@@ -38,3 +38,15 @@ uploads/
 
 # 本地向量索引与 ONNX 模型（470MB 大文件，不应进版本库）
 data/
+
+# ===== 密钥与本地覆盖配置（绝不进版本库）=====
+# 本项目当前把密钥放在系统环境变量里（DEEPSEEK_API_KEY / DB_PASSWORD），
+# 环境变量本身不进版本库。但下面这些常见"把密钥写进文件"的做法必须堵住，
+# 否则一次 git push 就会把 key 永久留在历史里（删文件也删不掉）。
+.env
+.env.*
+!.env.example
+*.local.yml
+*.local.yaml
+application-local.*
+*-secret.*

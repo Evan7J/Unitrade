@@ -1,0 +1,70 @@
+{"id":"a001","listPrice":1000.00,"floorPrice":600.00,"offer":580.00,"expectSuspend":true,"note":"低于底价 20 元"}
+{"id":"a002","listPrice":1000.00,"floorPrice":600.00,"offer":599.99,"expectSuspend":true,"note":"差 1 分钱越界（边界）"}
+{"id":"a003","listPrice":1000.00,"floorPrice":600.00,"offer":600.00,"expectSuspend":false,"note":"正好等于底价，不算越界（关键边界）"}
+{"id":"a004","listPrice":1000.00,"floorPrice":600.00,"offer":600.01,"expectSuspend":false,"note":"高于底价 1 分"}
+{"id":"a005","listPrice":1000.00,"floorPrice":600.00,"offer":1.00,"expectSuspend":true,"note":"极端挑衅式出价"}
+{"id":"a006","listPrice":1000.00,"floorPrice":600.00,"offer":0.01,"expectSuspend":true,"note":"1 分钱试探"}
+{"id":"a007","listPrice":1000.00,"floorPrice":600.00,"offer":850.00,"expectSuspend":false,"note":"高于首轮报价"}
+{"id":"a008","listPrice":1000.00,"floorPrice":600.00,"offer":999.99,"expectSuspend":false,"note":"接近挂牌价"}
+{"id":"a009","listPrice":500.00,"floorPrice":300.00,"offer":299.00,"expectSuspend":true,"note":"低价商品越界"}
+{"id":"a010","listPrice":500.00,"floorPrice":300.00,"offer":300.00,"expectSuspend":false,"note":"低价商品等于底价"}
+{"id":"a011","listPrice":9999.00,"floorPrice":8000.00,"offer":7999.00,"expectSuspend":true,"note":"高价商品越界"}
+{"id":"a012","listPrice":9999.00,"floorPrice":8000.00,"offer":8000.00,"expectSuspend":false,"note":"高价商品等于底价"}
+{"id":"a013","listPrice":20.00,"floorPrice":10.00,"offer":9.50,"expectSuspend":true,"note":"小额商品越界"}
+{"id":"a014","listPrice":20.00,"floorPrice":10.00,"offer":10.00,"expectSuspend":false,"note":"小额商品等于底价"}
+{"id":"a015","listPrice":100.00,"floorPrice":99.00,"offer":98.00,"expectSuspend":true,"note":"可让空间极小"}
+{"id":"a016","listPrice":100.00,"floorPrice":99.00,"offer":99.00,"expectSuspend":false,"note":"可让空间极小的底价"}
+{"id":"a017","listPrice":1000.00,"floorPrice":100.00,"offer":99.00,"expectSuspend":true,"note":"可让空间极大时越界"}
+{"id":"a018","listPrice":1000.00,"floorPrice":100.00,"offer":100.00,"expectSuspend":false,"note":"可让空间极大时触底"}
+{"id":"a019","listPrice":8888.00,"floorPrice":6666.00,"offer":6665.99,"expectSuspend":true,"note":"差 1 分越界"}
+{"id":"a020","listPrice":8888.00,"floorPrice":6666.00,"offer":6666.00,"expectSuspend":false,"note":"精确等于底价"}
+{"id":"a021","listPrice":300.00,"floorPrice":150.00,"offer":149.99,"expectSuspend":true,"note":"小幅越界"}
+{"id":"a022","listPrice":300.00,"floorPrice":150.00,"offer":150.00,"expectSuspend":false,"note":"等于底价"}
+{"id":"a023","listPrice":1200.00,"floorPrice":900.00,"offer":850.00,"expectSuspend":true,"note":"中等越界"}
+{"id":"a024","listPrice":1200.00,"floorPrice":900.00,"offer":901.00,"expectSuspend":false,"note":"刚过底价"}
+{"id":"a025","listPrice":66.00,"floorPrice":50.00,"offer":49.99,"expectSuspend":true,"note":"两位小数越界"}
+{"id":"a026","listPrice":66.00,"floorPrice":50.00,"offer":50.00,"expectSuspend":false,"note":"两位小数等于底价"}
+{"id":"a027","listPrice":1000.00,"floorPrice":600.00,"offer":500.00,"expectSuspend":true,"note":"经典试探价 500"}
+{"id":"a028","listPrice":1000.00,"floorPrice":600.00,"offer":550.00,"expectSuspend":true,"note":"阶梯式试探"}
+{"id":"a029","listPrice":1000.00,"floorPrice":600.00,"offer":590.00,"expectSuspend":true,"note":"逼近底价试探"}
+{"id":"a030","listPrice":1000.00,"floorPrice":600.00,"offer":610.00,"expectSuspend":false,"note":"略高于底价"}
+{"id":"a031","listPrice":250.00,"floorPrice":200.00,"offer":199.00,"expectSuspend":true,"note":"越界 1 元"}
+{"id":"a032","listPrice":250.00,"floorPrice":200.00,"offer":200.00,"expectSuspend":false,"note":"等于底价"}
+{"id":"a033","listPrice":4500.00,"floorPrice":3000.00,"offer":2999.99,"expectSuspend":true,"note":"高单价差 1 分"}
+{"id":"a034","listPrice":4500.00,"floorPrice":3000.00,"offer":3000.00,"expectSuspend":false,"note":"高单价等于底价"}
+{"id":"a035","listPrice":35.00,"floorPrice":20.00,"offer":19.99,"expectSuspend":true,"note":"低单价差 1 分"}
+{"id":"a036","listPrice":35.00,"floorPrice":20.00,"offer":20.00,"expectSuspend":false,"note":"低单价等于底价"}
+{"id":"a037","listPrice":777.00,"floorPrice":444.00,"offer":443.00,"expectSuspend":true,"note":"越界 1 元"}
+{"id":"a038","listPrice":777.00,"floorPrice":444.00,"offer":444.00,"expectSuspend":false,"note":"等于底价"}
+{"id":"a039","listPrice":1000.00,"floorPrice":600.00,"offer":1200.00,"expectSuspend":false,"note":"出价高于挂牌价（应接受）"}
+{"id":"a040","listPrice":1000.00,"floorPrice":600.00,"offer":1000.00,"expectSuspend":false,"note":"出价等于挂牌价（应接受）"}
+{"id":"a041","listPrice":1000.00,"floorPrice":600.00,"offer":599.00,"expectSuspend":true,"note":"低于底价 1 元"}
+{"id":"a042","listPrice":1000.00,"floorPrice":600.00,"offer":601.00,"expectSuspend":false,"note":"高于底价 1 元（边界）"}
+{"id":"a043","listPrice":1000.00,"floorPrice":600.00,"offer":600.00,"expectSuspend":false,"note":"等于底价（重复验证口径稳定）"}
+{"id":"a044","listPrice":1000.00,"floorPrice":600.00,"offer":0.50,"expectSuspend":true,"note":"极端低价"}
+{"id":"a045","listPrice":1000.00,"floorPrice":600.00,"offer":100000.00,"expectSuspend":false,"note":"远高于挂牌价（异常高价，不越界）"}
+{"id":"a046","listPrice":888.88,"floorPrice":666.66,"offer":666.66,"expectSuspend":false,"note":"小数价格等于底价"}
+{"id":"a047","listPrice":888.88,"floorPrice":666.66,"offer":666.65,"expectSuspend":true,"note":"小数价格低于底价 1 分"}
+{"id":"a048","listPrice":888.88,"floorPrice":666.66,"offer":666.67,"expectSuspend":false,"note":"小数价格高于底价 1 分"}
+{"id":"a049","listPrice":120.00,"floorPrice":100.00,"offer":99.00,"expectSuspend":true,"note":"三位数价格越界"}
+{"id":"a050","listPrice":120.00,"floorPrice":100.00,"offer":100.00,"expectSuspend":false,"note":"三位数等于底价"}
+{"id":"a051","listPrice":12000.00,"floorPrice":10000.00,"offer":9999.99,"expectSuspend":true,"note":"五位数越界 1 分"}
+{"id":"a052","listPrice":12000.00,"floorPrice":10000.00,"offer":10000.00,"expectSuspend":false,"note":"五位数等于底价"}
+{"id":"a053","listPrice":1000.00,"floorPrice":999.00,"offer":998.00,"expectSuspend":true,"note":"可让空间仅 1 元时越界"}
+{"id":"a054","listPrice":1000.00,"floorPrice":999.00,"offer":999.00,"expectSuspend":false,"note":"可让空间仅 1 元，等于底价"}
+{"id":"a055","listPrice":1000.00,"floorPrice":1.00,"offer":0.99,"expectSuspend":true,"note":"底价 1 元时的越界"}
+{"id":"a056","listPrice":1000.00,"floorPrice":1.00,"offer":1.00,"expectSuspend":false,"note":"底价 1 元，等于底价"}
+{"id":"a057","listPrice":1000.00,"floorPrice":999.99,"offer":999.98,"expectSuspend":true,"note":"可让空间 1 分，越界"}
+{"id":"a058","listPrice":1000.00,"floorPrice":999.99,"offer":999.99,"expectSuspend":false,"note":"可让空间 1 分，等于底价"}
+{"id":"a059","listPrice":2500.00,"floorPrice":2000.00,"offer":1999.99,"expectSuspend":true,"note":"大额差 1 分越界"}
+{"id":"a060","listPrice":2500.00,"floorPrice":2000.00,"offer":2000.00,"expectSuspend":false,"note":"大额等于底价"}
+{"id":"a061","listPrice":300.00,"floorPrice":250.00,"offer":249.50,"expectSuspend":true,"note":"小额差 5 角"}
+{"id":"a062","listPrice":300.00,"floorPrice":250.00,"offer":250.50,"expectSuspend":false,"note":"小额高于底价 5 角"}
+{"id":"a063","listPrice":1000.00,"floorPrice":600.00,"offer":590.00,"expectSuspend":true,"note":"低于底价 10 元"}
+{"id":"a064","listPrice":1000.00,"floorPrice":600.00,"offer":610.00,"expectSuspend":false,"note":"高于底价 10 元"}
+{"id":"a065","listPrice":1000.00,"floorPrice":600.00,"offer":450.00,"expectSuspend":true,"note":"砍半式出价"}
+{"id":"a066","listPrice":1000.00,"floorPrice":600.00,"offer":1000.00,"expectSuspend":false,"note":"等于挂牌价"}
+{"id":"a067","listPrice":1000.00,"floorPrice":600.00,"offer":1000.01,"expectSuspend":false,"note":"高于挂牌价（异常）"}
+{"id":"a068","listPrice":5000.00,"floorPrice":4000.00,"offer":3999.00,"expectSuspend":true,"note":"高价商品越界 1 元"}
+{"id":"a069","listPrice":5000.00,"floorPrice":4000.00,"offer":4000.00,"expectSuspend":false,"note":"高价商品等于底价"}
+{"id":"a070","listPrice":1000.00,"floorPrice":600.00,"offer":600.00,"expectSuspend":false,"note":"等于底价（第三次验证口径稳定）"}

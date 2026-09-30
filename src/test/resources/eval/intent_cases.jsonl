@@ -1,0 +1,130 @@
+{"id":"i001","message":"最低多少出","intent":"ASK_PRICE"}
+{"id":"i002","message":"这个多少钱啊","intent":"ASK_PRICE"}
+{"id":"i003","message":"怎么卖","intent":"ASK_PRICE"}
+{"id":"i004","message":"价格还能不能便宜点","intent":"ASK_PRICE"}
+{"id":"i005","message":"能少点吗","intent":"ASK_PRICE"}
+{"id":"i006","message":"能给我优惠点不","intent":"ASK_PRICE"}
+{"id":"i007","message":"什么价","intent":"ASK_PRICE"}
+{"id":"i008","message":"便宜点我就考虑","intent":"ASK_PRICE"}
+{"id":"i009","message":"有没有折扣","intent":"ASK_PRICE"}
+{"id":"i010","message":"同学你这个能便宜吗","intent":"ASK_PRICE"}
+{"id":"i011","message":"700 卖不卖","intent":"OFFER"}
+{"id":"i012","message":"我出 650","intent":"OFFER"}
+{"id":"i013","message":"800 行吗","intent":"OFFER"}
+{"id":"i014","message":"750 我就要了","intent":"OFFER"}
+{"id":"i015","message":"680 收","intent":"OFFER"}
+{"id":"i016","message":"600 块钱卖给我吧","intent":"OFFER"}
+{"id":"i017","message":"我最多出 720","intent":"OFFER"}
+{"id":"i018","message":"500 元可以吗","intent":"OFFER"}
+{"id":"i019","message":"820 拿走","intent":"OFFER"}
+{"id":"i020","message":"就 700 吧","intent":"OFFER"}
+{"id":"i021","message":"900 我要了","intent":"OFFER"}
+{"id":"i022","message":"我出 760 块","intent":"OFFER"}
+{"id":"i023","message":"你底价多少","intent":"PROBE_FLOOR"}
+{"id":"i024","message":"你的底线是多少","intent":"PROBE_FLOOR"}
+{"id":"i025","message":"最低能到多少","intent":"PROBE_FLOOR"}
+{"id":"i026","message":"直接说你最低价","intent":"PROBE_FLOOR"}
+{"id":"i027","message":"底价报一下","intent":"PROBE_FLOOR"}
+{"id":"i028","message":"你最少多少能卖","intent":"PROBE_FLOOR"}
+{"id":"i029","message":"底在哪","intent":"PROBE_FLOOR"}
+{"id":"i030","message":"什么价能卖你说个实在的","intent":"PROBE_FLOOR"}
+{"id":"i031","message":"你心里最低多少","intent":"PROBE_FLOOR"}
+{"id":"i032","message":"给个底价吧","intent":"PROBE_FLOOR"}
+{"id":"i033","message":"别家更便宜","intent":"PRESSURE"}
+{"id":"i034","message":"淘宝新的才 800","intent":"PRESSURE"}
+{"id":"i035","message":"闲鱼上一堆更便宜的","intent":"PRESSURE"}
+{"id":"i036","message":"太贵了不值这个价","intent":"PRESSURE"}
+{"id":"i037","message":"拼多多才卖 600","intent":"PRESSURE"}
+{"id":"i038","message":"官方旗舰店都比你便宜","intent":"PRESSURE"}
+{"id":"i039","message":"你这价格有点坑人","intent":"PRESSURE"}
+{"id":"i040","message":"二手的还这么贵","intent":"PRESSURE"}
+{"id":"i041","message":"隔壁卖 500 呢","intent":"PRESSURE"}
+{"id":"i042","message":"新的也才多点钱","intent":"PRESSURE"}
+{"id":"i043","message":"包邮我就要","intent":"CONDITION"}
+{"id":"i044","message":"能不能送个充电器","intent":"CONDITION"}
+{"id":"i045","message":"带上发票可以吗","intent":"CONDITION"}
+{"id":"i046","message":"有保修吗我要","intent":"CONDITION"}
+{"id":"i047","message":"再送个壳","intent":"CONDITION"}
+{"id":"i048","message":"要包邮哦","intent":"CONDITION"}
+{"id":"i049","message":"便宜点就买","intent":"CONDITION"}
+{"id":"i050","message":"送我张膜我就拍","intent":"CONDITION"}
+{"id":"i051","message":"配件带全吗","intent":"CHITCHAT"}
+{"id":"i052","message":"能开发票嘛","intent":"CONDITION"}
+{"id":"i053","message":"这个用了多久了","intent":"CHITCHAT"}
+{"id":"i054","message":"屏幕有划痕吗","intent":"CHITCHAT"}
+{"id":"i055","message":"电池还有多少","intent":"CHITCHAT"}
+{"id":"i056","message":"什么颜色","intent":"CHITCHAT"}
+{"id":"i057","message":"在哪自提","intent":"CHITCHAT"}
+{"id":"i058","message":"什么时候方便看货","intent":"CHITCHAT"}
+{"id":"i059","message":"适合打游戏吗","intent":"CHITCHAT"}
+{"id":"i060","message":"你平时在哪个校区","intent":"CHITCHAT"}
+{"id":"i061","message":"你就是个骗子","intent":"COMPLAINT"}
+{"id":"i062","message":"垃圾东西别卖了","intent":"COMPLAINT"}
+{"id":"i063","message":"我要投诉你","intent":"COMPLAINT"}
+{"id":"i064","message":"这么贵不如去抢","intent":"COMPLAINT"}
+{"id":"i065","message":"再这样我给你差评","intent":"COMPLAINT"}
+{"id":"i066","message":"你是不是有病","intent":"COMPLAINT"}
+{"id":"i067","message":"举报了","intent":"COMPLAINT"}
+{"id":"i068","message":"恶心人","intent":"COMPLAINT"}
+{"id":"i069","message":"行，我要了","intent":"CONFIRM"}
+{"id":"i070","message":"好的我拍了","intent":"CONFIRM"}
+{"id":"i071","message":"成交","intent":"CONFIRM"}
+{"id":"i072","message":"就这个价下单了","intent":"CONFIRM"}
+{"id":"i073","message":"可以我买了","intent":"CONFIRM"}
+{"id":"i074","message":"行吧就这个价","intent":"CONFIRM"}
+{"id":"i075","message":"那就它了","intent":"CONFIRM"}
+{"id":"i076","message":"好，付款去了","intent":"CONFIRM"}
+{"id":"i077","message":"没问题我确定","intent":"CONFIRM"}
+{"id":"i078","message":"就这样定了","intent":"CONFIRM"}
+{"id":"i079","message":"在吗","intent":"UNKNOWN"}
+{"id":"i080","message":"哈哈哈哈哈","intent":"UNKNOWN"}
+{"id":"i081","message":"??","intent":"UNKNOWN"}
+{"id":"i082","message":"哦","intent":"UNKNOWN"}
+{"id":"i083","message":"考虑一下","intent":"UNKNOWN"}
+{"id":"i084","message":"我再想想","intent":"UNKNOWN"}
+{"id":"i085","message":"嗯嗯","intent":"UNKNOWN"}
+{"id":"i086","message":"你是真人吗","intent":"UNKNOWN"}
+{"id":"i087","message":"这个平台不错","intent":"UNKNOWN"}
+{"id":"i088","message":"我先看看别的","intent":"UNKNOWN"}
+{"id":"i089","message":"明天再说吧","intent":"UNKNOWN"}
+{"id":"i090","message":"给我留一下","intent":"UNKNOWN"}
+{"id":"i091","message":"还能再低吗","intent":"ASK_PRICE"}
+{"id":"i092","message":"这个卖多少钱","intent":"ASK_PRICE"}
+{"id":"i093","message":"你这还能便宜多少","intent":"ASK_PRICE"}
+{"id":"i094","message":"价格方面好商量吗","intent":"ASK_PRICE"}
+{"id":"i095","message":"价格还能谈吗","intent":"ASK_PRICE"}
+{"id":"i096","message":"再少一点行不行","intent":"ASK_PRICE"}
+{"id":"i097","message":"学生党能不能优惠","intent":"ASK_PRICE"}
+{"id":"i098","message":"650 可以吗","intent":"OFFER"}
+{"id":"i099","message":"我给 720","intent":"OFFER"}
+{"id":"i100","message":"给你 800 吧","intent":"OFFER"}
+{"id":"i101","message":"600 收不收","intent":"OFFER"}
+{"id":"i102","message":"出价 680","intent":"OFFER"}
+{"id":"i103","message":"你最低能接受多少","intent":"PROBE_FLOOR"}
+{"id":"i104","message":"底价多少","intent":"PROBE_FLOOR"}
+{"id":"i105","message":"说实话你的底价","intent":"PROBE_FLOOR"}
+{"id":"i106","message":"最少多少钱肯出手","intent":"PROBE_FLOOR"}
+{"id":"i107","message":"别家同款才 500","intent":"PRESSURE"}
+{"id":"i108","message":"闲鱼上比你便宜多了","intent":"PRESSURE"}
+{"id":"i109","message":"全新也才这个价","intent":"PRESSURE"}
+{"id":"i110","message":"你这价格太贵了吧","intent":"PRESSURE"}
+{"id":"i111","message":"别的卖家 600 就卖","intent":"PRESSURE"}
+{"id":"i112","message":"外面都比你便宜","intent":"PRESSURE"}
+{"id":"i113","message":"包个邮我就下单","intent":"CONDITION"}
+{"id":"i114","message":"能送个壳吗","intent":"CONDITION"}
+{"id":"i115","message":"再送我个数据线吧","intent":"CONDITION"}
+{"id":"i116","message":"发票能开吗","intent":"CONDITION"}
+{"id":"i117","message":"用了多久了","intent":"CHITCHAT"}
+{"id":"i118","message":"有划痕吗","intent":"CHITCHAT"}
+{"id":"i119","message":"平时打游戏够用吗","intent":"CHITCHAT"}
+{"id":"i120","message":"配件都还在不","intent":"CHITCHAT"}
+{"id":"i121","message":"这也太坑了吧","intent":"COMPLAINT"}
+{"id":"i122","message":"我要投诉你","intent":"COMPLAINT"}
+{"id":"i123","message":"态度也太差了","intent":"COMPLAINT"}
+{"id":"i124","message":"给你差评","intent":"COMPLAINT"}
+{"id":"i125","message":"行，我要了","intent":"CONFIRM"}
+{"id":"i126","message":"那就这么定","intent":"CONFIRM"}
+{"id":"i127","message":"好，拍了","intent":"CONFIRM"}
+{"id":"i128","message":"可以，下单了","intent":"CONFIRM"}
+{"id":"i129","message":"成交","intent":"CONFIRM"}
+{"id":"i130","message":"行吧，就这么着","intent":"CONFIRM"}
