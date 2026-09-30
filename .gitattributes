@@ -1,2 +1,12 @@
 /mvnw text eol=lf
 *.cmd text eol=crlf
+
+# 语言统计口径
+# 本项目主体是后端（Java），前端只作联调与展示用途，
+# 不计入 GitHub 语言统计，避免仓库主语言显示为 Vue。
+frontend/** linguist-detectable=false
+frontend/** linguist-vendored
+
+# 资源与文档不计入统计
+screenshots/** linguist-documentation
+*.md linguist-documentation

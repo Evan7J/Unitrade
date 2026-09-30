@@ -25,8 +25,8 @@
 确保 MySQL 和 Redis 先跑起来，然后导入项目根目录下的 `init.sql` 建库建表。
 
 ```bash  
-git clone https://github.com/Evan7J/unitrade.git
-cd unitrade
+git clone https://github.com/Evan7J/Unitrade.git
+cd Unitrade
 # 设置环境变量 DEEPSEEK_API_KEY（DeepSeek 密钥）和 DB_PASSWORD（数据库密码），然后启动
 mvn spring-boot:run
 ```
