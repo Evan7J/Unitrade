@@ -1,4 +1,4 @@
-# UniTrade · 校园二手交易平台
+# UniTrade · 智能议价agent
 
 校园闲置交易平台。除了常规的商品发布 / 搜索 / 聊天 / 订单，这个项目主要做了一件事：**给二手交易加上一个能自己议价的 Agent**。
 
@@ -14,7 +14,7 @@
 | 检索 | Spring AI + Milvus（本地 ONNX embedding，无需 embedding API） |
 | 存储 | MySQL 8 + MyBatis-Plus 3.5.9 + Redis |
 | 通信 | WebSocket（实时聊天） |
-| 前端 | Vue 3 + Vite + Element Plus + TailwindCSS |
+| 前端 | Vue 3 + Element Plus |
 
 ## 议价 Agent
 
